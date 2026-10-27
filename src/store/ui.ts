@@ -23,6 +23,8 @@ export interface UiState {
   sheet: PickMode | null;
   shortcutsOpen: boolean;
   exportMenuOpen: boolean;
+  randomizeOpen: boolean;
+  aligning: boolean;
   toast: Toast | null;
   canvasFocused: boolean;
   bgMode: boolean;
@@ -41,6 +43,8 @@ export const uiStore = createStore<UiState, ReturnType<typeof uiActions>>(
     sheet: null,
     shortcutsOpen: false,
     exportMenuOpen: false,
+    randomizeOpen: false,
+    aligning: false,
     toast: null,
     canvasFocused: false,
     bgMode: false,
@@ -79,6 +83,12 @@ function uiActions({
     closeSheet: () => patch({ sheet: null }),
     setShortcutsOpen: (shortcutsOpen: boolean) => patch({ shortcutsOpen }),
     setExportMenuOpen: (exportMenuOpen: boolean) => patch({ exportMenuOpen }),
+    setRandomizeOpen: (randomizeOpen: boolean) =>
+      patch({
+        randomizeOpen,
+        ...(randomizeOpen ? { panel: "full", picker: null } : {}),
+      }),
+    setAligning: (aligning: boolean) => patch({ aligning }),
 
     setCanvasFocused: (canvasFocused: boolean) => patch({ canvasFocused }),
     toggleBgMode: (on: boolean) => {

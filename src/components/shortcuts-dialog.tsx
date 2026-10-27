@@ -89,8 +89,12 @@ const groups = ({ move, rotate }: Labels): { title: string; rows: Row[] }[] => [
       { label: "Undo", keys: keyParts("Mod+Z") },
       { label: "Redo", hint: `or ${keyLabel("Mod+Y")}`, keys: keyParts("Mod+Shift+Z") },
       { label: "Export menu", keys: keyParts("Mod+S") },
+      {
+        label: "Align all shapes, then confirm alignment",
+        keys: keyParts("Shift+L"),
+      },
+      { label: "Open randomization options", keys: keyParts("Shift+R") },
       { label: "Cycle the panel", hint: "full → mini → hidden", keys: ["P"] },
-      { label: "Surprise me (clear + randomize)", hint: "press again to confirm", keys: ["I"] },
       { label: "Clear everything", hint: "press again to confirm", keys: ["X"] },
       { label: "Show this cheat sheet", hint: "or F1", keys: ["?"] },
     ],

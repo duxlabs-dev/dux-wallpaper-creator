@@ -19,7 +19,14 @@ import {
 } from "@/lib/palette";
 import { DEFAULT_PATTERN, PATTERNS, type PatternId } from "@/lib/patterns";
 import { clampOpacity, clampScale, defaultPrefs, type Prefs } from "@/lib/prefs";
-import { createBlob, isBlob, randomBlob, randomShapeIndex, shapeIndex, SHAPES } from "@/lib/shapes";
+import {
+  createBlob,
+  isBlob,
+  randomBlob,
+  randomShapeIndex,
+  shapeIndex,
+  type SmoothnessIndex,
+} from "@/lib/shapes";
 import { loadSaved, persist } from "@/lib/storage";
 import { normDeg, pickRandom, rnd } from "@/lib/utils";
 
@@ -29,6 +36,55 @@ export interface FormatPatch {
   format?: FormatId;
   orientation?: Orientation;
   custom?: Size;
+}
+
+export interface RandomizeOptions {
+  positionX: boolean;
+  positionY: boolean;
+  shapeCount: boolean;
+  shapeType: boolean;
+  shapeIndex: boolean;
+  blobContour: boolean;
+  blobEdges: boolean;
+  blobSmoothness: boolean;
+  size: boolean;
+  rotation: boolean;
+  opacity: boolean;
+  fill: boolean;
+  overlapColor: boolean;
+  hue: boolean;
+  pattern: boolean;
+  patternOpacity: boolean;
+  patternScale: boolean;
+  layerOrder: boolean;
+  minimumGap: boolean;
+  allowOverlap: boolean;
+  limitOverlapCount: boolean;
+  spread: boolean;
+  canvasSpill: boolean;
+  sizeMin: number;
+  sizeMax: number;
+  countMin: number;
+  countMax: number;
+  rotationRange: number;
+  opacityMin: number;
+  opacityMax: number;
+  blobEdgesMin: number;
+  blobEdgesMax: number;
+  blobSmoothnessMin: number;
+  blobSmoothnessMax: number;
+  hueRange: number;
+  patternOpacityMin: number;
+  patternOpacityMax: number;
+  patternScaleMin: number;
+  patternScaleMax: number;
+  spreadStrength: number;
+  gap: number;
+  overlapMin: number;
+  overlapMax: number;
+  minOverlapCount: number;
+  maxOverlapCount: number;
+  bleed: number;
 }
 
 export interface WallpaperState {
@@ -109,8 +165,11 @@ const BLEED = 0.35;
 
 /** Where a `size`-wide box lands at random along one axis of the canvas.
  * The axis is extended by `BLEED` to allow shapes hanging off the canvas. */
-const randomAxis = (extent: number, size: number) =>
-  extent > size ? rnd(-BLEED * size, extent - size + BLEED * size) : (extent - size) / 2;
+const randomAxis = (extent: number, size: number, bleed = BLEED) => {
+  const min = -bleed * size;
+  const max = extent - size + bleed * size;
+  return max >= min ? rnd(min, max) : (extent - size) / 2;
+};
 
 const randomPlacement = (canvas: Size, spec: ShapeSpec): Layer => {
   const size = randomSize(canvas);
@@ -127,26 +186,252 @@ const randomPlacement = (canvas: Size, spec: ShapeSpec): Layer => {
   };
 };
 
-const surpriseLayers = (canvas: Size): Layer[] => {
-  const count = 2 + Math.floor(Math.random() * 4);
-  return Array.from({ length: count }, (_, index) => {
-    const size = randomSize(canvas);
-    const fill = randomFill();
-    const spec: ShapeSpec =
-      Math.random() < 0.25
-        ? { type: "blob", ...randomBlob() }
-        : { type: "shape", shape: Math.floor(Math.random() * SHAPES.length) };
-    return {
-      id: newLayerId(),
-      ...spec,
-      size,
-      x: Math.round(randomAxis(canvas.width, size)),
-      y: Math.round(randomAxis(canvas.height, size)),
-      rot: Math.round(rnd(0, 360)),
-      fill,
-      overlap: index > 0 && Math.random() < 0.75 ? randomOverlap(fill) : "none",
+const randomizeLayerBase = (canvas: Size, template?: Layer): Layer => {
+  if (template) return { ...template, id: newLayerId() };
+
+  const size = Math.round(Math.min(canvas.width, canvas.height) * 0.4);
+  return {
+    id: newLayerId(),
+    type: "shape",
+    shape: shapeIndex("circle", 0),
+    size,
+    x: Math.round(canvas.width / 2 - size / 2),
+    y: Math.round(canvas.height / 2 - size / 2),
+    rot: 0,
+    fill: PALETTE[0],
+    overlap: OVERLAP_OPTIONS[0],
+  };
+};
+
+const snapPosition = (layer: Layer, x: number, y: number, others: Layer[], canvas: Size) => {
+  const tolerance = Math.max(12, Math.min(canvas.width, canvas.height) * 0.018);
+  const nearest = (value: number, candidates: { position: number; guide: number }[]) => {
+    const candidate = candidates
+      .map((target) => ({ ...target, distance: Math.abs(target.position - value) }))
+      .filter(({ distance }) => distance <= tolerance)
+      .sort((a, b) => a.distance - b.distance)[0];
+    return candidate
+      ? { position: Math.round(candidate.position), guide: candidate.guide }
+      : { position: Math.round(value), guide: null };
+  };
+  const xCandidates = [
+    { position: 0, guide: 0 },
+    { position: canvas.width - layer.size, guide: canvas.width },
+    { position: canvas.width / 2 - layer.size / 2, guide: canvas.width / 2 },
+  ];
+  const yCandidates = [
+    { position: 0, guide: 0 },
+    { position: canvas.height - layer.size, guide: canvas.height },
+    { position: canvas.height / 2 - layer.size / 2, guide: canvas.height / 2 },
+  ];
+  for (const other of others) {
+    xCandidates.push(
+      { position: other.x, guide: other.x },
+      { position: other.x + other.size - layer.size, guide: other.x + other.size },
+      { position: other.x + other.size / 2 - layer.size / 2, guide: other.x + other.size / 2 },
+      { position: other.x + other.size, guide: other.x + other.size },
+      { position: other.x - layer.size, guide: other.x },
+    );
+    yCandidates.push(
+      { position: other.y, guide: other.y },
+      { position: other.y + other.size - layer.size, guide: other.y + other.size },
+      { position: other.y + other.size / 2 - layer.size / 2, guide: other.y + other.size / 2 },
+      { position: other.y + other.size, guide: other.y + other.size },
+      { position: other.y - layer.size, guide: other.y },
+    );
+  }
+  const xResult = nearest(x, xCandidates);
+  const yResult = nearest(y, yCandidates);
+  return {
+    x: xResult.position,
+    y: yResult.position,
+    guides: {
+      vertical: xResult.guide === null ? [] : [xResult.guide],
+      horizontal: yResult.guide === null ? [] : [yResult.guide],
+    },
+  };
+};
+
+const randomizeLayers = (
+  layers: Layer[],
+  canvas: Size,
+  options: RandomizeOptions,
+  currentPrefs: Prefs,
+): { layers: Layer[]; prefs: Prefs; satisfied: boolean } => {
+  const gapFor = (a: Layer, b: Layer) => {
+    const dx = Math.max(0, Math.abs(a.x + a.size / 2 - b.x - b.size / 2) - (a.size + b.size) / 2);
+    const dy = Math.max(0, Math.abs(a.y + a.size / 2 - b.y - b.size / 2) - (a.size + b.size) / 2);
+    return Math.hypot(dx, dy);
+  };
+  const overlapFor = (a: Layer, b: Layer) =>
+    Math.min(
+      (a.size + b.size) / 2 - Math.abs(a.x + a.size / 2 - b.x - b.size / 2),
+      (a.size + b.size) / 2 - Math.abs(a.y + a.size / 2 - b.y - b.size / 2),
+    );
+  const overlapCountFor = (candidate: Layer, placed: Layer[]) =>
+    placed.reduce((count, other) => count + Number(overlapFor(candidate, other) > 0), 0);
+  const penalty = (candidate: Layer, placed: Layer[]) => {
+    const pairPenalty = placed.reduce((total, other) => {
+      const overlap = Math.max(0, overlapFor(candidate, other));
+      const gapPenalty =
+        options.minimumGap && overlap === 0
+          ? Math.max(0, options.gap - gapFor(candidate, other))
+          : 0;
+      const overlapPenalty = options.allowOverlap
+        ? overlap > 0
+          ? Math.max(0, options.overlapMin - overlap) + Math.max(0, overlap - options.overlapMax)
+          : 0
+        : overlap;
+      return total + gapPenalty + overlapPenalty;
+    }, 0);
+    const overlapCount = options.limitOverlapCount ? overlapCountFor(candidate, placed) : 0;
+    const overlapCountPenalty = options.limitOverlapCount
+      ? Math.max(0, options.minOverlapCount - overlapCount) +
+        Math.max(0, overlapCount - options.maxOverlapCount)
+      : 0;
+    return pairPenalty + overlapCountPenalty * candidate.size;
+  };
+
+  let startingLayers = layers;
+  if (options.shapeCount) {
+    const targetCount = Math.round(rnd(options.countMin, options.countMax));
+    startingLayers = layers.slice(0, targetCount);
+    while (startingLayers.length < targetCount) {
+      const template = layers.length ? layers[startingLayers.length % layers.length] : undefined;
+      startingLayers = [...startingLayers, randomizeLayerBase(canvas, template)];
+    }
+  }
+
+  const placed: Layer[] = [];
+  for (const original of startingLayers) {
+    let layer = original;
+    const previousShape = isBlob(layer) ? undefined : (layer.shape ?? 0);
+
+    if (options.shapeType) {
+      if (Math.random() < 0.3) {
+        if (!isBlob(layer)) {
+          layer = { ...layer, type: "blob", ...randomBlob() };
+          delete layer.shape;
+        }
+      } else {
+        layer = {
+          ...layer,
+          type: "shape",
+          shape: previousShape ?? shapeIndex("circle", 0),
+        };
+        delete layer.path;
+        delete layer.points;
+        delete layer.smoothness;
+      }
+    }
+
+    if (options.shapeIndex && !isBlob(layer))
+      layer = { ...layer, shape: randomShapeIndex(previousShape) };
+
+    if (isBlob(layer) && (options.blobContour || options.blobEdges || options.blobSmoothness)) {
+      const edges = options.blobEdges
+        ? Math.round(rnd(options.blobEdgesMin, options.blobEdgesMax))
+        : layer.points.length;
+      const smoothness = options.blobSmoothness
+        ? (Math.round(rnd(options.blobSmoothnessMin, options.blobSmoothnessMax)) as SmoothnessIndex)
+        : layer.smoothness;
+      layer = { ...layer, ...createBlob(edges, smoothness) };
+    }
+
+    if (options.size) {
+      const minDimension = Math.min(canvas.width, canvas.height);
+      const size = Math.round(
+        rnd((options.sizeMin / 100) * minDimension, (options.sizeMax / 100) * minDimension),
+      );
+      layer = {
+        ...layer,
+        size,
+        x: layer.x + (layer.size - size) / 2,
+        y: layer.y + (layer.size - size) / 2,
+      };
+    }
+    if (options.rotation)
+      layer = { ...layer, rot: normDeg(rnd(-options.rotationRange, options.rotationRange)) };
+    if (options.opacity)
+      layer = { ...layer, opacity: rnd(options.opacityMin, options.opacityMax) / 100 };
+    if (options.fill) layer = { ...layer, fill: randomFill() };
+    if (options.overlapColor) layer = { ...layer, overlap: randomOverlap(layer.fill) };
+
+    if (options.positionX || options.positionY) {
+      let best = layer;
+      let bestPenalty = Number.POSITIVE_INFINITY;
+      let bestSpread = Number.NEGATIVE_INFINITY;
+      const attempts = options.spread ? 24 + options.spreadStrength * 3 : 240;
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        const candidate = {
+          ...layer,
+          x: options.positionX
+            ? Math.round(
+                randomAxis(canvas.width, layer.size, options.canvasSpill ? options.bleed / 100 : 0),
+              )
+            : layer.x,
+          y: options.positionY
+            ? Math.round(
+                randomAxis(
+                  canvas.height,
+                  layer.size,
+                  options.canvasSpill ? options.bleed / 100 : 0,
+                ),
+              )
+            : layer.y,
+        };
+        const candidatePenalty = penalty(candidate, placed);
+        const candidateSpread = placed.length
+          ? Math.min(...placed.map((other) => gapFor(candidate, other)))
+          : Number.POSITIVE_INFINITY;
+        if (
+          candidatePenalty < bestPenalty ||
+          (options.spread && candidatePenalty === bestPenalty && candidateSpread > bestSpread)
+        ) {
+          best = candidate;
+          bestPenalty = candidatePenalty;
+          bestSpread = candidateSpread;
+        }
+        if (candidatePenalty === 0 && !options.spread) break;
+      }
+      layer = best;
+    }
+    placed.push(layer);
+  }
+
+  let prefs = currentPrefs;
+  if (options.hue)
+    prefs = { ...prefs, hue: normDeg(prefs.hue + rnd(-options.hueRange, options.hueRange)) };
+  if (options.pattern) prefs = { ...prefs, pattern: pickRandom(PATTERNS) };
+  if (options.patternOpacity)
+    prefs = {
+      ...prefs,
+      opacity: clampOpacity(rnd(options.patternOpacityMin, options.patternOpacityMax)),
     };
-  });
+  if (options.patternScale)
+    prefs = {
+      ...prefs,
+      patternScale: clampScale(rnd(options.patternScaleMin, options.patternScaleMax)),
+    };
+  let randomizedLayers = placed;
+  if (options.layerOrder) {
+    randomizedLayers = [...placed];
+    for (let index = randomizedLayers.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [randomizedLayers[index], randomizedLayers[swapIndex]] = [
+        randomizedLayers[swapIndex],
+        randomizedLayers[index],
+      ];
+    }
+  }
+  const satisfied =
+    (!options.positionX && !options.positionY) ||
+    placed.every((layer, index) => penalty(layer, placed.slice(0, index)) === 0);
+  return {
+    layers: randomizedLayers,
+    prefs,
+    satisfied,
+  };
 };
 
 const signatureOf = ({ layers, prefs }: Snapshot) => {
@@ -166,6 +451,7 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
   let lastSignature = signatureOf(get());
   let lastChange = 0;
   let restoring = false;
+  let alignmentSnapshot: Layer[] | null = null;
 
   const patch = (partial: Partial<WallpaperState>) => setState((prev) => ({ ...prev, ...partial }));
 
@@ -267,6 +553,45 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
 
     addLayer,
     replaceActiveShape,
+
+    beginAlignment: () => {
+      if (alignmentSnapshot) return;
+      alignmentSnapshot = get().layers;
+    },
+
+    confirmAlignment: () => {
+      if (!alignmentSnapshot) return;
+      alignmentSnapshot = null;
+      commit({ layers: get().layers });
+    },
+
+    cancelAlignment: () => {
+      if (!alignmentSnapshot) return;
+      const layers = alignmentSnapshot;
+      alignmentSnapshot = null;
+      patch({ layers });
+    },
+
+    snapActiveTo: (proposedX: number, proposedY: number, transient = false) => {
+      const { layers, activeId, canvas } = get();
+      const activeLayer = layers.find((layer) => layer.id === activeId);
+      if (!activeLayer) return;
+      const { x, y, guides } = snapPosition(
+        activeLayer,
+        proposedX,
+        proposedY,
+        layers.filter((layer) => layer.id !== activeId),
+        canvas,
+      );
+      updateActive((layer) => ({ ...layer, x, y }), transient);
+      return guides;
+    },
+
+    randomizeLayers: (options: RandomizeOptions) => {
+      const result = randomizeLayers(get().layers, get().canvas, options, get().prefs);
+      commit({ layers: result.layers, prefs: result.prefs });
+      return result.satisfied;
+    },
 
     duplicateActive: () => {
       const { layers, activeId } = get();
@@ -392,20 +717,6 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
       if (layout.pattern) prefs.pattern = layout.pattern;
       if (layout.strength !== undefined) prefs.opacity = layout.strength;
       commit({ layers: layout.layers, activeId: null, prefs });
-    },
-
-    surprise: () => {
-      const { prefs, canvas } = get();
-      commit({
-        prefs: {
-          ...prefs,
-          hue: Math.floor(Math.random() * 360),
-          pattern: pickRandom(PATTERNS),
-          opacity: +rnd(0.06, 0.25).toFixed(2),
-        },
-        layers: surpriseLayers(canvas),
-        activeId: null,
-      });
     },
 
     undo: () => {

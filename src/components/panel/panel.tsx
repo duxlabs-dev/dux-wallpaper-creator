@@ -1,17 +1,18 @@
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { Tabs, TabsProps } from "@/components/ui/tabs";
 import { focusCanvas } from "@/a11y/focus-zones";
 import { isLastFocusable } from "@/lib/focus-dom";
-import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
+import { ariaKeyshortcuts, keyLabel } from "@/lib/shortcut-keys";
 import { cn } from "@/lib/utils";
-import { wallpaper } from "@/store/wallpaper";
 import { ui, useUi, type Tab } from "@/store/ui";
 import { GlobalTab } from "./global-tab";
 import { ShapePicker } from "./shape-picker";
 import { ShapeTab } from "./shape-tab";
 import { Toolbar } from "./toolbar";
-import { Add, Casino, Shapes, Tune } from "material-symbols/rounded";
+import { Add, AlignHorizontalCenter, Check, Close, Shapes, Tune } from "material-symbols/rounded";
 import { Shapes as ShapesFilled } from "material-symbols/rounded/filled";
+import { RandomizeMenu, RandomizeSettings } from "./randomize-menu";
+import { wallpaper } from "@/store/wallpaper";
 
 const tabs = [
   {
@@ -32,10 +33,12 @@ interface PanelProps {
 }
 
 export function Panel({ hueTrack, primaryHex }: PanelProps) {
-  const { panel, tab, picking } = useUi((state) => ({
+  const { panel, tab, picking, aligning, randomizeOpen } = useUi((state) => ({
     panel: state.panel,
     tab: state.tab,
     picking: state.picker !== null,
+    aligning: state.aligning,
+    randomizeOpen: state.randomizeOpen,
   }));
   if (panel === "hidden") return null;
   const mini = panel === "mini";
@@ -70,7 +73,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
             className={cn(
               "absolute inset-0 flex flex-col pt-2 transition-[translate,scale,opacity] duration-450 ease-emphasized",
               picking && "-translate-x-[18%] scale-90 opacity-0",
-              mini && "hidden",
+              (mini || randomizeOpen) && "hidden",
             )}
           >
             <Tabs tabs={tabs} value={tab} onChange={ui.setTab} label="Settings" />
@@ -85,16 +88,37 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
               )}
             </div>
             <div className="flex items-center gap-2 px-2 py-3">
-              <SurpriseButton />
-              <AddShapeButton mini={false} />
+              {aligning ? (
+                <AlignmentActions />
+              ) : (
+                <>
+                  <RandomizeMenu mini />
+                  <AddShapeButton mini={false} />
+                  <AlignButton mini={false} />
+                </>
+              )}
             </div>
+          </div>
+          <div
+            inert={!randomizeOpen}
+            aria-hidden={!randomizeOpen}
+            className={cn("absolute inset-0 flex flex-col", !randomizeOpen && "hidden")}
+          >
+            <RandomizeSettings />
           </div>
           <ShapePicker />
         </div>
         {mini && (
           <div className="align-center flex flex-col items-center gap-2 pb-3">
-            <SurpriseButton />
-            <AddShapeButton mini />
+            {aligning ? (
+              <AlignmentActions />
+            ) : (
+              <>
+                <RandomizeMenu mini />
+                <AddShapeButton mini />
+                <AlignButton mini />
+              </>
+            )}
           </div>
         )}
       </div>
@@ -102,18 +126,47 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
   );
 }
 
-function SurpriseButton() {
+function AlignButton({ mini }: { mini: boolean }) {
   return (
-    <Button
+    <IconButton
+      label={`Align shapes (${keyLabel("Shift+L")})`}
+      aria-keyshortcuts={ariaKeyshortcuts("Shift+L")}
       variant="tonal"
-      className="h-12 w-12 shrink-0 rounded-3xl px-0 py-0 [&_svg]:size-6"
-      title="Clears everything and randomizes shapes and pattern (I)"
-      aria-label="Surprise me"
-      aria-keyshortcuts={ariaKeyshortcuts("I")}
-      onClick={wallpaper.surprise}
+      className={mini ? "size-12 rounded-[14px]" : "size-12 rounded-3xl"}
+      onClick={() => {
+        wallpaper.beginAlignment();
+        ui.setAligning(true);
+      }}
     >
-      <Casino />
-    </Button>
+      <AlignHorizontalCenter />
+    </IconButton>
+  );
+}
+
+function AlignmentActions() {
+  return (
+    <div className="flex flex-1 items-center justify-center gap-3">
+      <IconButton
+        label="Keep this alignment"
+        variant="filled"
+        onClick={() => {
+          wallpaper.confirmAlignment();
+          ui.setAligning(false);
+        }}
+      >
+        <Check />
+      </IconButton>
+      <IconButton
+        label="Cancel alignment changes"
+        variant="tonal"
+        onClick={() => {
+          wallpaper.cancelAlignment();
+          ui.setAligning(false);
+        }}
+      >
+        <Close />
+      </IconButton>
+    </div>
   );
 }
 
@@ -134,7 +187,7 @@ function AddShapeButton({ mini }: { mini: boolean }) {
         "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-[15px] font-semibold text-on-primary focus-ring morph [&>svg]:size-6",
         mini
           ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px]"
-          : "h-12 w-full rounded-3xl hover:state-layer-8 active:rounded-[14px] active:state-layer-12",
+          : "h-12 min-w-0 flex-1 rounded-3xl hover:state-layer-8 active:rounded-[14px] active:state-layer-12",
       )}
     >
       <Add />

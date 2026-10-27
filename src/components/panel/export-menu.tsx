@@ -163,18 +163,8 @@ export function ExportMenu({ trigger = true, align = "end" }: ExportMenuProps) {
               `${canvas.width} × ${canvas.height}`,
               () => void exportPng(1),
             )}
-            {item(
-              <DataObject />,
-              "JSON layout",
-              "Import as a wallpaper in Dux Shell",
-              exportJson,
-            )}
-            {item(
-              <Wallpaper />,
-              "Install in DMS",
-              "Opens Dux Shell on this machine",
-              installInDms,
-            )}
+            {item(<DataObject />, "JSON layout", "Import as a wallpaper in Dux Shell", exportJson)}
+            {item(<Wallpaper />, "Install in DMS", "Opens Dux Shell on this machine", installInDms)}
           </div>,
           document.body,
         )}

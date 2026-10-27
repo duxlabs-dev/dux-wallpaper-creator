@@ -19,7 +19,7 @@ import {
   wallpaper,
   wallpaperStore,
 } from "@/store/wallpaper";
-import { ui, useUi } from "@/store/ui";
+import { ui, uiStore, useUi } from "@/store/ui";
 
 const hasActive = () => wallpaperStore.state.activeId !== null;
 
@@ -175,20 +175,20 @@ const once = (run: () => void) => (event: KeyboardEvent) => {
 };
 
 export const useShortcuts = () => {
-  const { picking, sheetOpen, dialogOpen, exportMenuOpen, bgMode, canvasFocused } = useUi(
-    (state) => ({
+  const { picking, sheetOpen, dialogOpen, exportMenuOpen, randomizeOpen, bgMode, canvasFocused } =
+    useUi((state) => ({
       picking: state.picker !== null,
       sheetOpen: state.sheet !== null,
       dialogOpen: state.shortcutsOpen,
       exportMenuOpen: state.exportMenuOpen,
+      randomizeOpen: state.randomizeOpen,
       bgMode: state.bgMode,
       canvasFocused: state.canvasFocused,
-    }),
-  );
+    }));
   const active = useWallpaper((state) => state.activeId !== null);
 
   const modal = picking || sheetOpen || dialogOpen;
-  const overlay = modal || exportMenuOpen;
+  const overlay = modal || exportMenuOpen || randomizeOpen;
   const live = !overlay;
   const onCanvas = canvasFocused && live;
   const shapeKeys = live && active && !bgMode;
@@ -196,13 +196,37 @@ export const useShortcuts = () => {
 
   useHotkeys(
     [
-      bind("Mod+Z", wallpaper.undo, { enabled: !modal, ignoreInputs: true }),
-      bind("Mod+Shift+Z", wallpaper.redo, { enabled: !modal, ignoreInputs: true }),
-      bind("Mod+Y", wallpaper.redo, { enabled: !modal, ignoreInputs: true }),
+      bind("Mod+Z", wallpaper.undo, { enabled: !overlay, ignoreInputs: true }),
+      bind("Mod+Shift+Z", wallpaper.redo, { enabled: !overlay, ignoreInputs: true }),
+      bind("Mod+Y", wallpaper.redo, { enabled: !overlay, ignoreInputs: true }),
       bind("Mod+S", () => ui.setExportMenuOpen(!exportMenuOpen), {
-        enabled: !modal,
+        enabled: !overlay,
         ignoreInputs: true,
       }),
+      bind(
+        "Shift+L",
+        () => {
+          if (uiStore.state.aligning) {
+            wallpaper.confirmAlignment();
+            ui.setAligning(false);
+          } else {
+            wallpaper.beginAlignment();
+            ui.setAligning(true);
+          }
+        },
+        { enabled: !overlay, ignoreInputs: true },
+      ),
+      bind(
+        "Shift+R",
+        () => {
+          if (uiStore.state.aligning) {
+            wallpaper.cancelAlignment();
+            ui.setAligning(false);
+          }
+          ui.setRandomizeOpen(true);
+        },
+        { enabled: !overlay, ignoreInputs: true },
+      ),
       bind("?", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
       bind("F1", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
       bind("F6", () => switchZone("start", canvasFocused), {
@@ -360,10 +384,6 @@ export const useShortcuts = () => {
           enabled: live,
         },
       ),
-      bind("I", (event) => armable(event, "i", "Surprise me? Press I again", wallpaper.surprise), {
-        enabled: live,
-      }),
-
       bind(
         "B",
         once(() => ui.toggleBgMode(!bgMode)),

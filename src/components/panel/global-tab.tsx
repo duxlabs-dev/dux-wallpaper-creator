@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { wallpaper } from "@/store/wallpaper";
+import { DeleteForever } from "material-symbols/rounded";
 import { FormatPicker } from "./format-picker";
 import { HuePicker } from "./hue-picker";
 import { PatternPicker } from "./pattern-picker";
 import { ThemeToggle } from "./theme-toggle";
-import { DeleteForever } from "material-symbols/rounded";
 
 interface GlobalTabProps {
   hueTrack: string;
