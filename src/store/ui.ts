@@ -4,7 +4,7 @@ import { wallpaperStore } from "./wallpaper";
 
 export type PanelMode = "full" | "mini" | "hidden";
 export type PickMode = "add" | "replace";
-export type Tab = "global" | "shape";
+export type Tab = "canvas" | "colors" | "shape";
 
 interface Toast {
   id: number;
@@ -36,7 +36,7 @@ let liveId = 0;
 export const uiStore = createStore<UiState, ReturnType<typeof uiActions>>(
   {
     panel: "full",
-    tab: "global",
+    tab: "canvas",
     picker: null,
     sheet: null,
     shortcutsOpen: false,

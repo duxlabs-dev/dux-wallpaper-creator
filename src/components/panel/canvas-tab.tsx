@@ -2,29 +2,18 @@ import { Button } from "@/components/ui/button";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { wallpaper } from "@/store/wallpaper";
 import { FormatPicker } from "./format-picker";
-import { HuePicker } from "./hue-picker";
 import { PatternPicker } from "./pattern-picker";
-import { SchemePicker } from "./scheme-picker";
-import { ThemeToggle } from "./theme-toggle";
 import { DeleteForever } from "material-symbols/rounded";
 
-interface GlobalTabProps {
-  hueTrack: string;
-  primaryHex: string;
-}
-
-export function GlobalTab({ hueTrack, primaryHex }: GlobalTabProps) {
+export function CanvasTab() {
   return (
     <section
-      id="panel-global"
+      id="panel-canvas"
       role="tabpanel"
-      aria-labelledby="tab-global"
+      aria-labelledby="tab-canvas"
       className="flex animate-fade-up flex-col gap-7"
     >
-      <ThemeToggle />
       <FormatPicker />
-      <HuePicker track={hueTrack} placeholder={primaryHex} />
-      <SchemePicker />
       <PatternPicker />
       <div className="flex flex-col gap-2 border-t border-outline-variant pt-6">
         <Button

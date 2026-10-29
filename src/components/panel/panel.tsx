@@ -6,18 +6,28 @@ import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { cn } from "@/lib/utils";
 import { wallpaper } from "@/store/wallpaper";
 import { ui, useUi, type Tab } from "@/store/ui";
-import { GlobalTab } from "./global-tab";
+import { ColorsTab } from "./colors-tab";
+import { CanvasTab } from "./canvas-tab";
 import { ShapePicker } from "./shape-picker";
 import { ShapeTab } from "./shape-tab";
 import { Toolbar } from "./toolbar";
-import { Add, Casino, Shapes, Tune } from "material-symbols/rounded";
-import { Shapes as ShapesFilled, Tune as TuneFilled } from "material-symbols/rounded/filled";
+import { Add, Casino, Palette, Shapes, AspectRatio } from "material-symbols/rounded";
+import {
+  Palette as PaletteFilled,
+  Shapes as ShapesFilled,
+  AspectRatio as AspectRatioFilled,
+} from "material-symbols/rounded/filled";
 
 const tabs = [
   {
-    id: "global",
-    label: "Global",
-    icon: (selected) => (selected ? <TuneFilled /> : <Tune />),
+    id: "canvas",
+    label: "Canvas",
+    icon: (selected) => (selected ? <AspectRatioFilled /> : <AspectRatio />),
+  },
+  {
+    id: "colors",
+    label: "Colors",
+    icon: (selected) => (selected ? <PaletteFilled /> : <Palette />),
   },
   {
     id: "shape",
@@ -78,8 +88,10 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
               tabIndex={-1}
               className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-2 pt-5 pb-2"
             >
-              {tab === "global" ? (
-                <GlobalTab hueTrack={hueTrack} primaryHex={primaryHex} />
+              {tab === "canvas" ? (
+                <CanvasTab />
+              ) : tab === "colors" ? (
+                <ColorsTab hueTrack={hueTrack} primaryHex={primaryHex} />
               ) : (
                 <ShapeTab />
               )}

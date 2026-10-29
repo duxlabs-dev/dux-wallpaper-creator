@@ -6,7 +6,7 @@ import { BASE_HUE, toHct } from "@/lib/theme";
 import { normDeg } from "@/lib/utils";
 import { useWallpaper, wallpaper } from "@/store/wallpaper";
 import { ui } from "@/store/ui";
-import { Palette } from "material-symbols/rounded";
+import { Colorize } from "material-symbols/rounded";
 
 interface HuePickerProps {
   track: string;
@@ -40,9 +40,30 @@ export function HuePicker({ track, placeholder }: HuePickerProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      <FieldLabel icon={<Palette />} htmlFor="hue">
-        Hue
-      </FieldLabel>
+      <div className="flex items-center gap-3">
+        <FieldLabel icon={<Colorize />} htmlFor="hue" className="flex-1">
+          Hue
+        </FieldLabel>
+        <input
+          type="text"
+          maxLength={7}
+          placeholder={placeholder}
+          spellCheck={false}
+          autoComplete="off"
+          aria-label="Hex color"
+          title="Type a hex color to use its hue"
+          value={hex}
+          onChange={(event) => {
+            setHex(event.target.value);
+            if (/^#?[0-9a-f]{6}$/i.test(event.target.value.trim())) applyHex(event.target.value);
+          }}
+          onBlur={(event) => applyHex(event.target.value)}
+          onKeyDown={(event) =>
+            (event.key === "Enter" || event.key === "Escape") && event.currentTarget.blur()
+          }
+          className="h-10 w-28 rounded-[4px] border border-outline bg-transparent px-3 py-0 font-[inherit] text-sm text-on-surface transition-[border-color,box-shadow] duration-(--duration-default-effects) ease-default-effects placeholder:text-on-surface-variant hover:border-on-surface focus:border-primary focus:shadow-[0_0_0_1px_var(--color-primary)] focus:outline-none"
+        />
+      </div>
       <Slider
         id="hue"
         min={0}
@@ -58,24 +79,6 @@ export function HuePicker({ track, placeholder }: HuePickerProps) {
         onPointerDown={onSliderDragStart}
         onPointerUp={onSliderDragEnd}
         onPointerCancel={onSliderDragEnd}
-      />
-      <input
-        type="text"
-        maxLength={7}
-        placeholder={placeholder}
-        spellCheck={false}
-        autoComplete="off"
-        title="Type a hex color to use its hue"
-        value={hex}
-        onChange={(event) => {
-          setHex(event.target.value);
-          if (/^#?[0-9a-f]{6}$/i.test(event.target.value.trim())) applyHex(event.target.value);
-        }}
-        onBlur={(event) => applyHex(event.target.value)}
-        onKeyDown={(event) =>
-          (event.key === "Enter" || event.key === "Escape") && event.currentTarget.blur()
-        }
-        className="h-14 w-full rounded-[4px] border border-outline bg-transparent px-4 py-0 font-[inherit] text-base text-on-surface transition-[border-color,box-shadow] duration-(--duration-default-effects) ease-default-effects placeholder:text-on-surface-variant hover:border-on-surface focus:border-primary focus:shadow-[0_0_0_1px_var(--color-primary)] focus:outline-none"
       />
     </div>
   );
