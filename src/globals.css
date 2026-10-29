@@ -14,30 +14,14 @@
   src: url("/fonts/MaterialSymbolsRounded.woff2") format("woff2");
 }
 
-:root,
-.dark {
-  --md-sys-color-primary: rgb(177 209 138);
-  --md-sys-color-primary-container: rgb(53 78 22);
-  --md-sys-color-secondary: rgb(191 203 173);
-  --md-sys-color-secondary-container: rgb(64 74 51);
-  --md-sys-color-tertiary: rgb(160 208 203);
-  --md-sys-color-tertiary-container: rgb(31 78 75);
-  --md-sys-color-surface: rgb(18 20 14);
-  --md-sys-color-on-surface: rgb(226 227 216);
-  --md-sys-color-inverse-primary: rgb(76 102 43);
+/* Scheme tokens are set from JS (use-theme-colors). */
+:root {
   --md-sys-color-black: rgb(0 0 0);
+  color-scheme: dark;
 }
 
 .light {
-  --md-sys-color-primary: rgb(76 102 43);
-  --md-sys-color-primary-container: rgb(205 237 163);
-  --md-sys-color-secondary: rgb(88 98 73);
-  --md-sys-color-secondary-container: rgb(220 231 200);
-  --md-sys-color-tertiary: rgb(56 102 99);
-  --md-sys-color-tertiary-container: rgb(188 236 231);
-  --md-sys-color-surface: rgb(249 250 239);
-  --md-sys-color-on-surface: rgb(26 28 22);
-  --md-sys-color-inverse-primary: rgb(177 209 138);
+  color-scheme: light;
 }
 
 @theme inline {
@@ -173,8 +157,8 @@
     margin: 0;
     height: 100%;
     overflow: hidden;
-    background: var(--md-sys-color-surface);
-    color: var(--md-sys-color-on-surface);
+    background: var(--md-sys-color-surface, Canvas);
+    color: var(--md-sys-color-on-surface, CanvasText);
     font-family: var(--font-sans);
   }
   dialog::backdrop {

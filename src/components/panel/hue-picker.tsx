@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { Slider } from "@/components/ui/slider";
-import { hexToRgb, toOklch } from "@/lib/color";
-import { BASE_HUE } from "@/lib/theme";
+import { hexToRgb } from "@/lib/color";
+import { BASE_HUE, toHct } from "@/lib/theme";
 import { normDeg } from "@/lib/utils";
 import { useWallpaper, wallpaper } from "@/store/wallpaper";
 import { ui } from "@/store/ui";
@@ -23,8 +23,8 @@ export function HuePicker({ track, placeholder }: HuePickerProps) {
       if (text.trim()) ui.showToast("Use a hex like #4c662b", 2000);
       return;
     }
-    const [, chroma, hue] = toOklch(rgb);
-    if (chroma < 0.01) {
+    const { chroma, hue } = toHct(rgb);
+    if (chroma < 3) {
       ui.showToast("That color is gray, so it has no hue.", 2000);
       return;
     }
