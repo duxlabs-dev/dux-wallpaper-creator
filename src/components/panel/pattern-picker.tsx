@@ -23,7 +23,7 @@ function PatternTile({ id }: { id: PatternId }) {
       value={id}
       title={label}
       aria-label={label}
-      className="relative aspect-square overflow-hidden rounded-2xl border-0 bg-surface-container-high text-xs font-medium text-on-surface focus-ring morph hover:state-layer-8 active:rounded-[10px] data-checked:rounded-[28px] data-checked:bg-primary-container data-checked:text-on-primary-container"
+      className="relative aspect-square overflow-hidden rounded-2xl border-0 bg-surface-container-highest text-xs font-medium text-on-surface focus-ring morph hover:state-layer-8 active:rounded-[10px] data-checked:rounded-[28px] data-checked:bg-primary-container data-checked:text-on-primary-container"
     >
       {src ? (
         <span

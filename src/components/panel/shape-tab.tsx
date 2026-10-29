@@ -203,7 +203,7 @@ export function ShapeTab() {
             value="none"
             title="No overlap color (Shift+0)"
             aria-label="No overlap color"
-            className="inline-flex size-[30px] items-center justify-center rounded-full border-0 bg-surface-container-high p-0 text-on-surface-variant focus-ring morph data-checked:bg-secondary data-checked:text-on-secondary [&>svg]:size-[18px]"
+            className="inline-flex size-[30px] items-center justify-center rounded-full border-0 bg-surface-container-highest p-0 text-on-surface-variant focus-ring morph data-checked:bg-secondary data-checked:text-on-secondary [&>svg]:size-[18px]"
           >
             <Block />
           </RadioItem>

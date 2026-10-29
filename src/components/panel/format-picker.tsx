@@ -18,7 +18,7 @@ const orientations = [
 ] as const;
 
 const chipClass =
-  "morph focus-ring flex h-14 flex-col items-center justify-center gap-1.5 rounded-2xl border-0 bg-surface-container-high text-xs font-medium leading-none text-on-surface hover:state-layer-8 active:rounded-[10px] data-checked:rounded-[28px] data-checked:bg-primary-container data-checked:text-on-primary-container";
+  "morph focus-ring flex h-14 flex-col items-center justify-center gap-1.5 rounded-2xl border-0 bg-surface-container-highest text-xs font-medium leading-none text-on-surface hover:state-layer-8 active:rounded-[10px] data-checked:rounded-[28px] data-checked:bg-primary-container data-checked:text-on-primary-container";
 
 function ChipIcon({ ratio, portrait }: { ratio: number; portrait: boolean }) {
   const aspectRatio = portrait ? 1 / ratio : ratio;

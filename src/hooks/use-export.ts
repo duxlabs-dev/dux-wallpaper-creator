@@ -11,7 +11,7 @@ export const useExport = () => {
     const base = {
       layers,
       canvas,
-      tokens: shiftedTokens(dark, prefs.hue),
+      tokens: shiftedTokens(dark, prefs.hue, { variant: prefs.scheme, spec: prefs.spec }),
       pattern: prefs.pattern,
       patternOpacity: prefs.opacity,
       patternScale: prefs.patternScale,

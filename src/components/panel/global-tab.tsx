@@ -4,6 +4,7 @@ import { wallpaper } from "@/store/wallpaper";
 import { FormatPicker } from "./format-picker";
 import { HuePicker } from "./hue-picker";
 import { PatternPicker } from "./pattern-picker";
+import { SchemePicker } from "./scheme-picker";
 import { ThemeToggle } from "./theme-toggle";
 import { DeleteForever } from "material-symbols/rounded";
 
@@ -23,6 +24,7 @@ export function GlobalTab({ hueTrack, primaryHex }: GlobalTabProps) {
       <ThemeToggle />
       <FormatPicker />
       <HuePicker track={hueTrack} placeholder={primaryHex} />
+      <SchemePicker />
       <PatternPicker />
       <div className="flex flex-col gap-2 border-t border-outline-variant pt-6">
         <Button

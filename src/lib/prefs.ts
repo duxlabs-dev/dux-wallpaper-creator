@@ -6,12 +6,15 @@ import {
   PATTERN_SCALE,
   type PatternId,
 } from "./patterns";
+import { isSchemeVariant, isSpecVersion, type SchemeVariant, type SpecVersion } from "./theme";
 import { clamp, normDeg } from "./utils";
 
 export interface Prefs {
   pattern: PatternId;
   opacity: number;
   hue: number;
+  scheme: SchemeVariant;
+  spec: SpecVersion;
   patternScale: number;
   format: FormatId;
   orientation: Orientation;
@@ -22,6 +25,8 @@ export const defaultPrefs = (): Prefs => ({
   pattern: DEFAULT_PATTERN,
   opacity: PATTERN_OPACITY.default,
   hue: 0,
+  scheme: "tonal-spot",
+  spec: "2021",
   patternScale: PATTERN_SCALE.default,
   format: "16:9",
   orientation: "landscape",
@@ -47,6 +52,8 @@ export const sanitizePrefs = (raw: unknown): Prefs => {
     prefs.opacity = clampOpacity(sanitizedPrefs.opacity);
   if (typeof sanitizedPrefs.hue === "number" && Number.isFinite(sanitizedPrefs.hue))
     prefs.hue = normDeg(sanitizedPrefs.hue);
+  if (isSchemeVariant(sanitizedPrefs.scheme)) prefs.scheme = sanitizedPrefs.scheme;
+  if (isSpecVersion(sanitizedPrefs.spec)) prefs.spec = sanitizedPrefs.spec;
   if (
     typeof sanitizedPrefs.patternScale === "number" &&
     Number.isFinite(sanitizedPrefs.patternScale)

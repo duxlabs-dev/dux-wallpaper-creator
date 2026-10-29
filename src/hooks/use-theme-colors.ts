@@ -4,8 +4,16 @@ import { hueGradient, shiftedTokens, TOKENS, tokenCssVar } from "@/lib/theme";
 import { useWallpaper } from "@/store/wallpaper";
 
 export const useThemeColors = () => {
-  const { dark, hue } = useWallpaper((state) => ({ dark: state.dark, hue: state.prefs.hue }));
-  const tokens = useMemo(() => shiftedTokens(dark, hue), [dark, hue]);
+  const { dark, hue, variant, spec } = useWallpaper((state) => ({
+    dark: state.dark,
+    hue: state.prefs.hue,
+    variant: state.prefs.scheme,
+    spec: state.prefs.spec,
+  }));
+  const tokens = useMemo(
+    () => shiftedTokens(dark, hue, { variant, spec }),
+    [dark, hue, variant, spec],
+  );
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -18,6 +26,6 @@ export const useThemeColors = () => {
   return {
     tokens,
     primaryHex: rgbToHex(tokens.primary),
-    hueTrack: useMemo(() => hueGradient(dark), [dark]),
+    hueTrack: useMemo(() => hueGradient(dark, { variant, spec }), [dark, variant, spec]),
   };
 };

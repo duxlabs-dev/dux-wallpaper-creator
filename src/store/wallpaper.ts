@@ -21,6 +21,7 @@ import { DEFAULT_PATTERN, PATTERNS, type PatternId } from "@/lib/patterns";
 import { clampOpacity, clampScale, defaultPrefs, type Prefs } from "@/lib/prefs";
 import { createBlob, isBlob, randomBlob, randomShapeIndex, shapeIndex, SHAPES } from "@/lib/shapes";
 import { loadSaved, persist } from "@/lib/storage";
+import type { SchemeVariant, SpecVersion } from "@/lib/theme";
 import { normDeg, pickRandom, rnd } from "@/lib/utils";
 
 export type LayerDirection = number;
@@ -354,6 +355,10 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
     setDark: (dark: boolean) => patch({ dark }),
 
     setHue: (hue: number) => commit({ prefs: { ...get().prefs, hue: normDeg(hue) } }),
+
+    setScheme: (scheme: SchemeVariant) => commit({ prefs: { ...get().prefs, scheme } }),
+
+    setSpec: (spec: SpecVersion) => commit({ prefs: { ...get().prefs, spec } }),
 
     setPattern,
 
