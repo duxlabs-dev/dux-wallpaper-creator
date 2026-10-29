@@ -75,7 +75,7 @@ export function HuePicker({ track, placeholder }: HuePickerProps) {
         onKeyDown={(event) =>
           (event.key === "Enter" || event.key === "Escape") && event.currentTarget.blur()
         }
-        className="w-full rounded-2xl border border-on-surface/38 bg-transparent px-4 py-2.5 font-[inherit] text-on-surface transition-[border-color,box-shadow] duration-200 placeholder:text-on-surface/60 hover:border-on-surface focus:border-primary focus:shadow-[0_0_0_1px_var(--color-primary)] focus:outline-none"
+        className="h-14 w-full rounded-[4px] border border-outline bg-transparent px-4 py-0 font-[inherit] text-base text-on-surface transition-[border-color,box-shadow] duration-(--duration-default-effects) ease-default-effects placeholder:text-on-surface-variant hover:border-on-surface focus:border-primary focus:shadow-[0_0_0_1px_var(--color-primary)] focus:outline-none"
       />
     </div>
   );

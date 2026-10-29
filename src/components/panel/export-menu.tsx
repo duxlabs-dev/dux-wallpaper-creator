@@ -9,7 +9,7 @@ import { useWallpaper } from "@/store/wallpaper";
 import { ui, useUi } from "@/store/ui";
 import { Download, Image, DataObject, Wallpaper } from "material-symbols/rounded";
 
-const MENU_WIDTH = 212;
+const MENU_WIDTH = 280;
 const GAP = 6;
 const EDGE = 8;
 
@@ -109,12 +109,12 @@ export function ExportMenu({ trigger = true, align = "end" }: ExportMenuProps) {
         ui.setExportMenuOpen(false);
         onClick();
       }}
-      className="flex min-h-[52px] cursor-pointer items-center gap-3 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-sm font-medium text-on-surface morph hover:bg-on-surface/8 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary active:rounded-lg active:bg-on-surface/12 [&>svg]:size-[22px] [&>svg]:shrink-0 [&>svg]:text-on-surface-variant"
+      className="flex min-h-11 cursor-pointer items-center gap-3 rounded-[4px] border-0 bg-transparent px-4 py-2 text-left text-base leading-6 text-on-surface focus-ring-inset morph first:rounded-t-xl last:rounded-b-xl hover:bg-on-surface/8 active:bg-on-surface/10 [&>svg]:size-5 [&>svg]:shrink-0 [&>svg]:text-on-surface-variant"
     >
       {icon}
-      <span className="flex flex-col gap-0.5">
+      <span className="flex flex-col">
         {title}
-        <small className="text-xs font-normal text-on-surface-variant">{hint}</small>
+        <small className="text-sm leading-5 text-on-surface-variant">{hint}</small>
       </span>
     </button>
   );
@@ -149,7 +149,7 @@ export function ExportMenu({ trigger = true, align = "end" }: ExportMenuProps) {
               top: position?.top ?? 0,
               visibility: position ? "visible" : "hidden",
             }}
-            className="fixed z-50 flex w-[212px] animate-fade-up flex-col gap-0.5 rounded-2xl bg-surface-container-high p-2 shadow-[0_2px_6px_rgba(0,0,0,.25),0_8px_24px_rgba(0,0,0,.2)]"
+            className="fixed z-50 flex w-[280px] animate-fade-up flex-col gap-0.5 rounded-2xl bg-surface-container-low p-1 shadow-level2"
           >
             {item(
               <Image />,
@@ -163,18 +163,8 @@ export function ExportMenu({ trigger = true, align = "end" }: ExportMenuProps) {
               `${canvas.width} × ${canvas.height}`,
               () => void exportPng(1),
             )}
-            {item(
-              <DataObject />,
-              "JSON layout",
-              "Import as a wallpaper in Dux Shell",
-              exportJson,
-            )}
-            {item(
-              <Wallpaper />,
-              "Install in DMS",
-              "Opens Dux Shell on this machine",
-              installInDms,
-            )}
+            {item(<DataObject />, "JSON layout", "Import as a wallpaper in Dux Shell", exportJson)}
+            {item(<Wallpaper />, "Install in DMS", "Opens Dux Shell on this machine", installInDms)}
           </div>,
           document.body,
         )}

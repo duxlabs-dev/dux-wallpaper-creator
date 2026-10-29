@@ -153,10 +153,11 @@ export function ShortcutsDialog() {
       className="fixed inset-0 m-auto max-h-[min(82vh,760px)] w-[min(640px,92vw)] overflow-hidden rounded-[28px] border-0 bg-surface-container-high p-0 text-sm text-on-surface open:flex open:animate-dialog-in open:flex-col"
     >
       <div className="flex items-center gap-3 py-4 pr-3 pb-2 pl-6">
-        <h2 id="shortcuts-title" className="m-0 flex-1 text-[22px] font-semibold">
+        <h2 id="shortcuts-title" className="m-0 flex-1 text-2xl leading-8 font-normal">
           Keyboard shortcuts
         </h2>
         <IconButton
+          variant="text"
           label="Close (Esc)"
           aria-keyshortcuts="Escape"
           onClick={() => ui.setShortcutsOpen(false)}
@@ -170,9 +171,7 @@ export function ShortcutsDialog() {
       >
         {groups(labels).map((group) => (
           <section key={group.title}>
-            <h3 className="mb-1.5 text-xs font-semibold tracking-[.06em] text-primary uppercase">
-              {group.title}
-            </h3>
+            <h3 className="mb-1.5 text-sm leading-5 font-medium text-primary">{group.title}</h3>
             {group.rows.map((row, rowIndex) => (
               <div key={rowIndex} className="flex items-center justify-between gap-3 py-[7px]">
                 <span className="leading-[1.35]">

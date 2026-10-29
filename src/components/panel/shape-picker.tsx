@@ -33,7 +33,7 @@ export function ShapePicker() {
       data-open={open}
       className="absolute inset-0 flex flex-col bg-surface-container pt-2 transition-[translate,opacity] duration-450 ease-emphasized group-data-[panel=mini]/panel:hidden data-[open=false]:translate-x-full"
     >
-      <div className="flex items-center gap-2 border-b border-outline-variant px-1 pb-2">
+      <div className="flex items-center gap-2 border-b border-outline-variant px-1.5 pb-2">
         <IconButton
           ref={back}
           label="Back (Esc)"
@@ -42,12 +42,12 @@ export function ShapePicker() {
         >
           <ArrowBack />
         </IconButton>
-        <span className="text-base font-semibold whitespace-nowrap">
+        <span className="text-base leading-6 font-medium whitespace-nowrap">
           {replacing ? "Change shape" : "Add shape"}
         </span>
       </div>
       <ShapeGrid
-        className="min-h-0 flex-1 grid-cols-4 px-1 pt-3 pb-1"
+        className="min-h-0 flex-1 grid-cols-4 px-1.5 pt-3 pb-1.5"
         currentShape={replacing ? active?.shape : undefined}
         onPick={(spec, shiftKey) => {
           pickShape(mode!, spec);

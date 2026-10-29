@@ -18,7 +18,7 @@ const orientations = [
 ] as const;
 
 const chipClass =
-  "morph focus-ring flex h-14 flex-col items-center justify-center gap-1.5 rounded-2xl border-0 bg-surface-container-high text-xs font-medium leading-none text-on-surface hover:bg-[color-mix(in_srgb,var(--color-surface-container-high)_88%,var(--color-on-surface))] active:rounded-[10px] data-checked:rounded-[28px] data-checked:bg-primary-container data-checked:text-on-primary-container";
+  "morph focus-ring flex h-14 flex-col items-center justify-center gap-1.5 rounded-2xl border-0 bg-surface-container-high text-xs font-medium leading-none text-on-surface hover:state-layer-8 active:rounded-[10px] data-checked:rounded-[28px] data-checked:bg-primary-container data-checked:text-on-primary-container";
 
 function ChipIcon({ ratio, portrait }: { ratio: number; portrait: boolean }) {
   const aspectRatio = portrait ? 1 / ratio : ratio;
@@ -28,7 +28,7 @@ function ChipIcon({ ratio, portrait }: { ratio: number; portrait: boolean }) {
 }
 
 const inputClass =
-  "no-spin min-w-0 flex-1 rounded-2xl border border-on-surface/38 bg-transparent px-4 py-2.5 font-[inherit] text-on-surface transition-[border-color,box-shadow] duration-200 hover:border-on-surface focus:border-primary focus:shadow-[0_0_0_1px_var(--color-primary)] focus:outline-none";
+  "no-spin min-w-0 flex-1 h-14 rounded-[4px] border border-outline bg-transparent px-4 py-0 font-[inherit] text-base text-on-surface transition-[border-color,box-shadow] duration-(--duration-default-effects) ease-default-effects hover:border-on-surface focus:border-primary focus:shadow-[0_0_0_1px_var(--color-primary)] focus:outline-none";
 
 export function FormatPicker() {
   const { format, orientation, canvas } = useWallpaper((state) => ({

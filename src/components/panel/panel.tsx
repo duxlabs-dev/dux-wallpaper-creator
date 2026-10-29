@@ -11,13 +11,13 @@ import { ShapePicker } from "./shape-picker";
 import { ShapeTab } from "./shape-tab";
 import { Toolbar } from "./toolbar";
 import { Add, Casino, Shapes, Tune } from "material-symbols/rounded";
-import { Shapes as ShapesFilled } from "material-symbols/rounded/filled";
+import { Shapes as ShapesFilled, Tune as TuneFilled } from "material-symbols/rounded/filled";
 
 const tabs = [
   {
     id: "global",
     label: "Global",
-    icon: <Tune />,
+    icon: (selected) => (selected ? <TuneFilled /> : <Tune />),
   },
   {
     id: "shape",
@@ -131,10 +131,10 @@ function AddShapeButton({ mini }: { mini: boolean }) {
         else ui.openPicker("add");
       }}
       className={cn(
-        "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-[15px] font-semibold text-on-primary focus-ring morph [&>svg]:size-6",
+        "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-base leading-6 font-medium text-on-primary focus-ring morph [&>svg]:size-6",
         mini
-          ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px]"
-          : "h-12 w-full rounded-3xl hover:state-layer-8 active:rounded-[14px] active:state-layer-12",
+          ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px] active:state-layer-10"
+          : "h-12 w-full rounded-3xl hover:state-layer-8 active:rounded-[14px] active:state-layer-10",
       )}
     >
       <Add />

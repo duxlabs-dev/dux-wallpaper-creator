@@ -101,12 +101,7 @@ export function ShapeTab() {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button
-          variant="tonal"
-          title="Change shape"
-          onClick={() => openShapes("replace")}
-          className="inline-flex h-9 gap-1.5 rounded-[18px] px-3 py-0 text-[15px] font-semibold active:rounded-[10px] [&>svg]:size-5"
-        >
+        <Button variant="tonal" title="Change shape" onClick={() => openShapes("replace")}>
           <Shapes />
           {layerName(active)}
           <ChevronRight />
@@ -117,7 +112,7 @@ export function ShapeTab() {
           label={`${activeIsBlob ? "Reshape blob" : "Random shape"} (M)`}
           aria-keyshortcuts={ariaKeyshortcuts("M")}
           onClick={wallpaper.shuffleActive}
-          className="ml-auto rounded-[18px] active:rounded-[10px]"
+          className="ml-auto"
         >
           <Shuffle />
         </IconButton>
@@ -208,7 +203,7 @@ export function ShapeTab() {
             value="none"
             title="No overlap color (Shift+0)"
             aria-label="No overlap color"
-            className="inline-flex size-[30px] items-center justify-center rounded-full border-0 bg-surface-container-high p-0 text-on-surface-variant focus-ring data-checked:outline-3 data-checked:outline-offset-2 data-checked:outline-primary [&>svg]:size-[18px]"
+            className="inline-flex size-[30px] items-center justify-center rounded-full border-0 bg-surface-container-high p-0 text-on-surface-variant focus-ring morph data-checked:bg-secondary data-checked:text-on-secondary [&>svg]:size-[18px]"
           >
             <Block />
           </RadioItem>

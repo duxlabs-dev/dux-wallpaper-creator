@@ -59,7 +59,7 @@ export function Preview() {
         onFocus={onFocus}
         onBlur={() => ui.setCanvasFocused(false)}
         onPointerDown={onPointerDown}
-        className="relative overflow-hidden bg-surface shadow-[0_0_0_1px] shadow-on-surface/14 focus-ring"
+        className="relative overflow-hidden bg-surface shadow-[0_0_0_1px] shadow-outline-variant focus-ring"
         style={style}
       >
         <Stage scale={scale} />

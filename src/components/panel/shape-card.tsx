@@ -19,7 +19,7 @@ export function ShapeCard({ d, name, current, tabIndex, onFocus, onPick }: Shape
       onFocus={onFocus}
       onClick={(event) => onPick(event.shiftKey)}
       className={cn(
-        "group/card relative flex cursor-pointer items-center justify-center rounded-2xl border-0 bg-transparent px-0 py-2 morph hover:bg-on-surface/8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:rounded-[10px]",
+        "group/card relative flex cursor-pointer items-center justify-center rounded-2xl border-0 bg-transparent px-0 py-2 focus-ring morph hover:bg-on-surface/8 active:rounded-[10px]",
         current && "rounded-[28px] bg-primary-container",
       )}
     >
@@ -27,7 +27,7 @@ export function ShapeCard({ d, name, current, tabIndex, onFocus, onPick }: Shape
         <path
           d={d}
           className={cn(
-            "transition-[fill] duration-200 ease-effect group-hover/card:fill-primary",
+            "transition-[fill] duration-(--duration-default-effects) ease-default-effects group-hover/card:fill-primary",
             current ? "fill-on-primary-container" : "fill-on-surface/40",
           )}
         />

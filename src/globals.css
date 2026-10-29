@@ -28,44 +28,55 @@
   --font-sans: "Google Sans Flex", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --color-primary: var(--md-sys-color-primary);
+  --color-on-primary: var(--md-sys-color-on-primary);
   --color-primary-container: var(--md-sys-color-primary-container);
+  --color-on-primary-container: var(--md-sys-color-on-primary-container);
   --color-secondary: var(--md-sys-color-secondary);
+  --color-on-secondary: var(--md-sys-color-on-secondary);
   --color-secondary-container: var(--md-sys-color-secondary-container);
+  --color-on-secondary-container: var(--md-sys-color-on-secondary-container);
   --color-tertiary: var(--md-sys-color-tertiary);
+  --color-on-tertiary: var(--md-sys-color-on-tertiary);
   --color-tertiary-container: var(--md-sys-color-tertiary-container);
+  --color-on-tertiary-container: var(--md-sys-color-on-tertiary-container);
   --color-surface: var(--md-sys-color-surface);
+  --color-surface-container-low: var(--md-sys-color-surface-container-low);
+  --color-surface-container: var(--md-sys-color-surface-container);
+  --color-surface-container-high: var(--md-sys-color-surface-container-high);
+  --color-surface-container-highest: var(--md-sys-color-surface-container-highest);
   --color-on-surface: var(--md-sys-color-on-surface);
+  --color-on-surface-variant: var(--md-sys-color-on-surface-variant);
+  --color-outline: var(--md-sys-color-outline);
+  --color-outline-variant: var(--md-sys-color-outline-variant);
+  --color-inverse-surface: var(--md-sys-color-inverse-surface);
+  --color-inverse-on-surface: var(--md-sys-color-inverse-on-surface);
   --color-inverse-primary: var(--md-sys-color-inverse-primary);
+  --color-error: var(--md-sys-color-error);
+  --color-error-container: var(--md-sys-color-error-container);
+  --color-on-error-container: var(--md-sys-color-on-error-container);
 
-  --color-surface-container: color-mix(
-    in srgb,
-    var(--md-sys-color-on-surface) 6%,
-    var(--md-sys-color-surface)
-  );
-  --color-surface-container-high: color-mix(
-    in srgb,
-    var(--md-sys-color-on-surface) 11%,
-    var(--md-sys-color-surface)
-  );
-  --color-on-surface-variant: color-mix(in srgb, var(--md-sys-color-on-surface) 68%, transparent);
-  --color-on-primary: var(--md-sys-color-surface);
-  --color-on-primary-container: color-mix(
-    in srgb,
-    var(--md-sys-color-primary) 30%,
-    var(--md-sys-color-on-surface)
-  );
-  --color-on-secondary-container: color-mix(
-    in srgb,
-    var(--md-sys-color-secondary) 25%,
-    var(--md-sys-color-on-surface)
-  );
-  --color-outline-variant: color-mix(in srgb, var(--md-sys-color-on-surface) 16%, transparent);
-  --color-error: #ff5449;
+  /* M3 Expressive springs as linear() curves */
+  /* prettier-ignore */
+  --ease-fast-spatial: linear(0, 0.02, 0.074, 0.152, 0.246, 0.348, 0.453, 0.555, 0.653, 0.742, 0.821, 0.889, 0.947, 0.994, 1.03, 1.057, 1.076, 1.088, 1.094, 1.095, 1.091, 1.085, 1.078, 1.068, 1.059, 1.049, 1.039, 1.03, 1.022, 1.015, 1.009, 1.003, 0.999, 0.996, 0.994, 0.992, 0.991, 0.991, 0.991, 0.991, 0.992, 0.993, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 1);
+  /* prettier-ignore */
+  --ease-default-spatial: linear(0, 0.013, 0.049, 0.1, 0.162, 0.23, 0.302, 0.374, 0.445, 0.513, 0.578, 0.637, 0.692, 0.741, 0.786, 0.825, 0.859, 0.888, 0.914, 0.935, 0.953, 0.968, 0.98, 0.99, 0.998, 1.004, 1.008, 1.011, 1.013, 1.014, 1.015, 1.015, 1.015, 1.014, 1.013, 1.012, 1.011, 1.01, 1.009, 1.008, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1);
+  /* prettier-ignore */
+  --ease-fast-effects: linear(0, 0.016, 0.056, 0.111, 0.175, 0.244, 0.313, 0.381, 0.446, 0.506, 0.563, 0.614, 0.661, 0.703, 0.741, 0.774, 0.804, 0.83, 0.853, 0.873, 0.891, 0.906, 0.919, 0.931, 0.94, 0.949, 0.956, 0.963, 0.968, 0.973, 0.977, 0.98, 0.983, 0.986, 0.988, 0.99, 0.991, 0.993, 0.994, 0.995, 0.996, 0.996, 0.997, 0.997, 0.998, 0.998, 0.998, 0.999, 1);
+  /* prettier-ignore */
+  --ease-default-effects: linear(0, 0.015, 0.053, 0.107, 0.169, 0.235, 0.303, 0.369, 0.433, 0.493, 0.549, 0.601, 0.648, 0.69, 0.728, 0.762, 0.793, 0.82, 0.843, 0.864, 0.882, 0.898, 0.912, 0.924, 0.935, 0.944, 0.952, 0.959, 0.965, 0.97, 0.974, 0.978, 0.981, 0.984, 0.986, 0.988, 0.99, 0.991, 0.993, 0.994, 0.995, 0.996, 0.996, 0.997, 0.997, 0.998, 0.998, 0.998, 1);
 
-  --ease-spring: cubic-bezier(0.42, 1.67, 0.21, 0.9);
-  --ease-effect: cubic-bezier(0.34, 0.8, 0.34, 1);
+  /* Springs have no duration of their own. These are the times until each one
+     settles within ~0.2% of its target, so they only fit their own curve. */
+  --duration-fast-spatial: 357ms;
+  --duration-default-spatial: 421ms;
+  --duration-fast-effects: 147ms;
+  --duration-default-effects: 221ms;
   --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
   --ease-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+
+  --shadow-level1: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);
+  --shadow-level2: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+  --shadow-level3: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 4px 8px 3px rgb(0 0 0 / 0.15);
 
   --animate-fade-up: fade-up 220ms ease both;
   --animate-dialog-in: dialog-in 300ms cubic-bezier(0.05, 0.7, 0.1, 1) both;
@@ -92,6 +103,13 @@
   }
 }
 
+/* Registered so the slider's track gap can animate along with its handle. */
+@property --slider-gap {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 8px;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @utility scrollbar-hidden {
@@ -106,8 +124,8 @@
   box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor 8%, transparent);
 }
 
-@utility state-layer-12 {
-  box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor 12%, transparent);
+@utility state-layer-10 {
+  box-shadow: inset 0 0 0 999px color-mix(in srgb, currentColor 10%, transparent);
 }
 
 /* Note: the border-radius part only animates between finite radii. Never put
@@ -115,16 +133,27 @@
    `rounded-[50%]` for circular buttons instead. */
 @utility morph {
   transition:
-    border-radius 380ms var(--ease-spring),
-    background-color 200ms var(--ease-effect),
-    color 200ms var(--ease-effect),
-    box-shadow 200ms var(--ease-effect);
+    border-radius var(--duration-fast-spatial) var(--ease-fast-spatial),
+    background-color var(--duration-default-effects) var(--ease-default-effects),
+    color var(--duration-default-effects) var(--ease-default-effects),
+    box-shadow var(--duration-default-effects) var(--ease-default-effects);
 }
 
+/* The ring reaches 5px past the element. Scrolling and overflow-hidden
+   containers need at least that much padding around focusable children, or
+   the ring gets cut off. Use focus-ring-inset where that is not possible
+   (tabs, menu items). */
 @utility focus-ring {
   &:focus-visible {
-    outline: 2px solid var(--md-sys-color-primary);
+    outline: 3px solid var(--md-sys-color-secondary);
     outline-offset: 2px;
+  }
+}
+
+@utility focus-ring-inset {
+  &:focus-visible {
+    outline: 3px solid var(--md-sys-color-secondary);
+    outline-offset: -3px;
   }
 }
 
@@ -162,7 +191,7 @@
     font-family: var(--font-sans);
   }
   dialog::backdrop {
-    background: rgb(0 0 0 / 0.42);
+    background: rgb(0 0 0 / 0.32);
   }
 }
 

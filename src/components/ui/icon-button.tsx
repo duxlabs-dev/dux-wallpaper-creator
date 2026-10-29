@@ -30,7 +30,7 @@ export function IconButton({
         onClick?.(event);
       }}
       className={cn(
-        "inline-flex shrink-0 cursor-pointer items-center justify-center border-0 p-0 focus-ring morph active:rounded-lg disabled:pointer-events-none disabled:opacity-40 [&_svg]:size-6",
+        "inline-flex shrink-0 cursor-pointer items-center justify-center border-0 p-0 focus-ring morph active:rounded-lg disabled:pointer-events-none disabled:text-on-surface/38 [&_svg]:size-6",
         size === "sm" ? "size-8 rounded-[50%] [&_svg]:size-5" : "size-10 rounded-[50%]",
         buttonVariants[variant],
         className,
