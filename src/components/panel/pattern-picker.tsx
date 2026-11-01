@@ -1,6 +1,6 @@
 import { FieldLabel } from "@/components/ui/field-label";
 import { RadioGroup, RadioItem } from "@/components/ui/radio-group";
-import { Slider } from "@/components/ui/slider";
+import { SliderField } from "@/components/ui/slider-field";
 import { usePatternTile } from "@/hooks/use-pattern-tile";
 import {
   PATTERN_OPACITY,
@@ -67,42 +67,30 @@ export function PatternPicker() {
           ))}
         </RadioGroup>
       </div>
-      <div className="flex flex-col gap-2">
-        <FieldLabel
-          icon={<OpenInFull />}
-          htmlFor="pattern-scale"
-          title="Pattern size: R and F while in background mode"
-        >
-          Pattern size
-        </FieldLabel>
-        <Slider
-          id="pattern-scale"
-          min={PATTERN_SCALE.min}
-          max={PATTERN_SCALE.max}
-          step={0.1}
-          value={scale}
-          onChange={wallpaper.setPatternScale}
-          onReset={() => wallpaper.setPatternScale(PATTERN_SCALE.default)}
-        />
-      </div>
-      <div className="flex flex-col gap-2">
-        <FieldLabel
-          icon={<Contrast />}
-          htmlFor="pattern-opacity"
-          title="Pattern strength: ← and → or T and G while in background mode"
-        >
-          Pattern strength
-        </FieldLabel>
-        <Slider
-          id="pattern-opacity"
-          min={PATTERN_OPACITY.min * 100}
-          max={PATTERN_OPACITY.max * 100}
-          step={1}
-          value={Math.round(opacity * 100)}
-          onChange={(value) => wallpaper.setPatternOpacity(value / 100)}
-          onReset={() => wallpaper.setPatternOpacity(PATTERN_OPACITY.default)}
-        />
-      </div>
+      <SliderField
+        id="pattern-scale"
+        icon={<OpenInFull />}
+        label="Pattern size"
+        value={scale}
+        min={PATTERN_SCALE.min}
+        max={PATTERN_SCALE.max}
+        step={0.1}
+        title="Pattern size: R and F while in background mode"
+        onChange={wallpaper.setPatternScale}
+        onReset={() => wallpaper.setPatternScale(PATTERN_SCALE.default)}
+      />
+      <SliderField
+        id="pattern-opacity"
+        icon={<Contrast />}
+        label="Pattern strength"
+        value={Math.round(opacity * 100)}
+        min={PATTERN_OPACITY.min * 100}
+        max={PATTERN_OPACITY.max * 100}
+        step={1}
+        title="Pattern strength: ← and → or T and G while in background mode"
+        onChange={(value) => wallpaper.setPatternOpacity(value / 100)}
+        onReset={() => wallpaper.setPatternOpacity(PATTERN_OPACITY.default)}
+      />
     </>
   );
 }

@@ -10,6 +10,7 @@ import { usePatternTile } from "@/hooks/use-pattern-tile";
 import { layerPath, layerTransform } from "@/lib/layer";
 import { patternUrl } from "@/lib/patterns";
 import { keyLabel } from "@/lib/shortcut-keys";
+import { incrementCounter } from "@/lib/storage";
 import { normDeg } from "@/lib/utils";
 import { selectActive, useWallpaper, wallpaper, wallpaperStore } from "@/store/wallpaper";
 import { ui } from "@/store/ui";
@@ -21,6 +22,7 @@ interface StageProps {
 
 const DRAG_THRESHOLD = 5;
 const SNAP_HINT_LIMIT = 3;
+const NO_GUIDES = { vertical: [] as number[], horizontal: [] as number[] };
 const layerIdOf = (target: EventTarget | null) =>
   (target as Element | null)?.closest?.("[data-id]")?.getAttribute("data-id") ?? null;
 
@@ -33,11 +35,7 @@ export function Stage({ scale }: StageProps) {
     patternScale: state.prefs.patternScale,
   }));
   const active = useWallpaper(selectActive);
-  const snapHintCount = useRef(0);
-  const [snapGuides, setSnapGuides] = useState({
-    vertical: [] as number[],
-    horizontal: [] as number[],
-  });
+  const [snapGuides, setSnapGuides] = useState(NO_GUIDES);
   const tile = usePatternTile(pattern);
   const svgRef = useRef<SVGSVGElement>(null);
   const scaleRef = useRef(scale);
@@ -73,7 +71,7 @@ export function Stage({ scale }: StageProps) {
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
     if (event.button !== 0) return;
-    setSnapGuides({ vertical: [], horizontal: [] });
+    setSnapGuides(NO_GUIDES);
     if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
     const id = layerIdOf(event.target);
     if (!id) {
@@ -95,18 +93,8 @@ export function Stage({ scale }: StageProps) {
       moved = true;
       if (!showedSnapHint) {
         showedSnapHint = true;
-        try {
-          const shown = Number(localStorage.getItem("dux-snap-hint-count") ?? 0);
-          if (shown < SNAP_HINT_LIMIT) {
-            localStorage.setItem("dux-snap-hint-count", String(shown + 1));
-            ui.showToast(`Hold ${keyLabel("Mod")} while dragging to snap`);
-          }
-        } catch {
-          if (snapHintCount.current < SNAP_HINT_LIMIT) {
-            snapHintCount.current += 1;
-            ui.showToast(`Hold ${keyLabel("Mod")} while dragging to snap`);
-          }
-        }
+        if (incrementCounter("dux-snap-hint-count", SNAP_HINT_LIMIT, "dux-snap-hint-shown"))
+          ui.showToast(`Hold ${keyLabel("Mod")} while dragging to snap`);
       }
       const x = origin.lx + deltaX / scaleRef.current;
       const y = origin.ly + deltaY / scaleRef.current;
@@ -114,9 +102,9 @@ export function Stage({ scale }: StageProps) {
         pointerEvent.metaKey ||
         (pointerEvent.ctrlKey && !/Mac|iPhone|iPad/.test(navigator.platform));
       if (snapModifier) {
-        setSnapGuides(wallpaper.snapActiveTo(x, y, true) ?? { vertical: [], horizontal: [] });
+        setSnapGuides(wallpaper.snapActiveTo(x, y, true) ?? NO_GUIDES);
       } else {
-        setSnapGuides({ vertical: [], horizontal: [] });
+        setSnapGuides(NO_GUIDES);
         wallpaper.patchActive({ x, y }, true);
       }
     };
@@ -124,7 +112,7 @@ export function Stage({ scale }: StageProps) {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
-      setSnapGuides({ vertical: [], horizontal: [] });
+      setSnapGuides(NO_GUIDES);
       if (moved) wallpaper.patchActive({});
     };
     window.addEventListener("pointermove", move);
@@ -168,36 +156,34 @@ export function Stage({ scale }: StageProps) {
         {layers.map((layer, index) => (
           <LayerShape key={layer.id} layer={layer} index={index} below={layers.slice(0, index)} />
         ))}
-        {snapGuides.vertical.length > 0 &&
-          snapGuides.vertical.map((x) => (
-            <line
-              key={`snap-x-${x}`}
-              x1={x}
-              x2={x}
-              y1={0}
-              y2={canvas.height}
-              vectorEffect="non-scaling-stroke"
-              stroke="var(--md-sys-color-primary)"
-              strokeWidth={1.5}
-              strokeDasharray="5 4"
-              className="pointer-events-none"
-            />
-          ))}
-        {snapGuides.horizontal.length > 0 &&
-          snapGuides.horizontal.map((y) => (
-            <line
-              key={`snap-y-${y}`}
-              x1={0}
-              x2={canvas.width}
-              y1={y}
-              y2={y}
-              vectorEffect="non-scaling-stroke"
-              stroke="var(--md-sys-color-primary)"
-              strokeWidth={1.5}
-              strokeDasharray="5 4"
-              className="pointer-events-none"
-            />
-          ))}
+        {snapGuides.vertical.map((x) => (
+          <line
+            key={`snap-x-${x}`}
+            x1={x}
+            x2={x}
+            y1={0}
+            y2={canvas.height}
+            vectorEffect="non-scaling-stroke"
+            stroke="var(--md-sys-color-primary)"
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+            className="pointer-events-none"
+          />
+        ))}
+        {snapGuides.horizontal.map((y) => (
+          <line
+            key={`snap-y-${y}`}
+            x1={0}
+            x2={canvas.width}
+            y1={y}
+            y2={y}
+            vectorEffect="non-scaling-stroke"
+            stroke="var(--md-sys-color-primary)"
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+            className="pointer-events-none"
+          />
+        ))}
         {active && (
           <path
             d={layerPath(active)}

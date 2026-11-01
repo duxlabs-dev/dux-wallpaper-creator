@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { FieldLabel } from "@/components/ui/field-label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { IconButton } from "@/components/ui/icon-button";
-import { Slider } from "@/components/ui/slider";
+import { SliderField } from "@/components/ui/slider-field";
+import { SubpageHeader } from "@/components/ui/subpage-header";
+import { Switch as OptionSwitch } from "@/components/ui/switch";
 import { BLOB_MAX_EDGES, BLOB_MIN_EDGES, SMOOTHNESS } from "@/lib/shapes";
+import { PATTERN_OPACITY, PATTERN_SCALE } from "@/lib/patterns";
+import type { RandomizeOptions } from "@/lib/randomize";
+import { loadRandomizeOptions, persistRandomizeOptions } from "@/lib/storage";
 import { ui, useUi } from "@/store/ui";
-import { wallpaper, useWallpaper, type RandomizeOptions } from "@/store/wallpaper";
+import { wallpaper, useWallpaper } from "@/store/wallpaper";
 import {
-  ArrowBack,
   Casino,
-  Check,
   KeyboardArrowDown,
   Layers,
   OpenInFull,
@@ -18,54 +21,6 @@ import {
   Shuffle,
   Tune,
 } from "material-symbols/rounded";
-
-const DEFAULT_OPTIONS: RandomizeOptions = {
-  positionX: true,
-  positionY: true,
-  shapeCount: false,
-  shapeType: false,
-  shapeIndex: true,
-  blobContour: true,
-  blobEdges: false,
-  blobSmoothness: false,
-  size: true,
-  rotation: true,
-  opacity: false,
-  fill: true,
-  overlapColor: true,
-  hue: false,
-  pattern: false,
-  patternOpacity: false,
-  patternScale: false,
-  layerOrder: false,
-  minimumGap: false,
-  allowOverlap: false,
-  limitOverlapCount: false,
-  canvasSpill: false,
-  sizeMin: 15,
-  sizeMax: 80,
-  countMin: 3,
-  countMax: 12,
-  rotationRange: 180,
-  opacityMin: 15,
-  opacityMax: 100,
-  blobEdgesMin: BLOB_MIN_EDGES,
-  blobEdgesMax: BLOB_MAX_EDGES,
-  blobSmoothnessMin: 0,
-  blobSmoothnessMax: SMOOTHNESS.length - 1,
-  hueRange: 180,
-  patternOpacityMin: 0.02,
-  patternOpacityMax: 0.4,
-  patternScaleMin: 0.5,
-  patternScaleMax: 8,
-  spreadStrength: 0,
-  gap: 48,
-  overlapMin: 5,
-  overlapMax: 25,
-  minOverlapCount: 0,
-  maxOverlapCount: 4,
-  bleed: 35,
-};
 
 const SWITCH_KEYS = [
   "positionX",
@@ -92,7 +47,7 @@ const SWITCH_KEYS = [
   "canvasSpill",
 ] as const satisfies readonly (keyof RandomizeOptions)[];
 
-export function RandomizeMenu({ mini = false }: { mini?: boolean } = {}) {
+export function RandomizeButton({ mini }: { mini: boolean }) {
   const open = useUi((state) => state.randomizeOpen);
   const button = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(open);
@@ -119,9 +74,8 @@ export function RandomizeMenu({ mini = false }: { mini?: boolean } = {}) {
 
 export function RandomizeSettings() {
   const count = useWallpaper((state) => state.layers.length);
-  const [options, setOptions] = useState(DEFAULT_OPTIONS);
+  const [options, setOptions] = useState(loadRandomizeOptions);
   const backButton = useRef<HTMLButtonElement>(null);
-  const allOptions = useRef<HTMLInputElement>(null);
   const open = useUi((state) => state.randomizeOpen);
   const enabledCount = SWITCH_KEYS.filter((key) => options[key]).length;
   const allEnabled = enabledCount === SWITCH_KEYS.length;
@@ -131,52 +85,21 @@ export function RandomizeSettings() {
     if (open) backButton.current?.focus({ preventScroll: true });
   }, [open]);
 
-  useEffect(() => {
-    if (allOptions.current) allOptions.current.indeterminate = someEnabled;
-  }, [someEnabled]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      ui.setRandomizeOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  useEffect(() => persistRandomizeOptions(options), [options]);
 
   const setOption = <K extends keyof RandomizeOptions>(key: K, value: RandomizeOptions[K]) =>
     setOptions((current) => ({ ...current, [key]: value }));
 
   const setAllSwitches = (value: boolean) =>
-    setOptions((current) => ({
-      ...current,
-      positionX: value,
-      positionY: value,
-      shapeCount: value,
-      shapeType: value,
-      shapeIndex: value,
-      blobContour: value,
-      blobEdges: value,
-      blobSmoothness: value,
-      size: value,
-      rotation: value,
-      opacity: value,
-      fill: value,
-      overlapColor: value,
-      hue: value,
-      pattern: value,
-      patternOpacity: value,
-      patternScale: value,
-      layerOrder: value,
-      minimumGap: value,
-      allowOverlap: value,
-      limitOverlapCount: value,
-      canvasSpill: value,
-      sizeMin: value ? current.sizeMin : Math.min(current.sizeMin, 100),
-      sizeMax: value ? current.sizeMax : Math.min(current.sizeMax, 100),
-    }));
+    setOptions((current) => {
+      const next = { ...current };
+      for (const key of SWITCH_KEYS) next[key] = value;
+      if (!value) {
+        next.sizeMin = Math.min(next.sizeMin, 100);
+        next.sizeMax = Math.min(next.sizeMax, 100);
+      }
+      return next;
+    });
 
   const randomize = () => {
     const satisfied = wallpaper.randomizeLayers(options);
@@ -189,40 +112,19 @@ export function RandomizeSettings() {
       aria-label="Randomize options"
       className="flex min-h-0 flex-1 flex-col text-sm text-on-surface"
     >
-      <header className="flex items-center gap-2 border-b border-outline-variant px-1 pb-2">
-        <IconButton
-          ref={backButton}
-          label="Back (Esc)"
-          aria-keyshortcuts="Escape"
-          onClick={() => ui.setRandomizeOpen(false)}
-        >
-          <ArrowBack />
-        </IconButton>
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <h2 className="m-0 flex-1 text-base font-semibold">Randomize</h2>
-          <label className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:state-layer-8">
-            <input
-              ref={allOptions}
-              type="checkbox"
-              aria-label="Select all randomization options"
-              aria-checked={someEnabled ? "mixed" : allEnabled}
-              checked={allEnabled}
-              onChange={() => setAllSwitches(!allEnabled)}
-              className="peer absolute size-5 cursor-pointer opacity-0"
-            />
-            <span
-              aria-hidden="true"
-              className={`pointer-events-none flex size-[18px] items-center justify-center rounded-[4px] border-2 transition-colors ${allEnabled || someEnabled ? "border-primary bg-primary text-on-primary" : "border-on-surface-variant text-transparent"} peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary`}
-            >
-              {someEnabled ? (
-                <span className="h-0.5 w-2.5 rounded-full bg-current" />
-              ) : (
-                allEnabled && <Check aria-hidden="true" className="size-3.5" />
-              )}
-            </span>
-          </label>
-        </div>
-      </header>
+      <SubpageHeader
+        title="Randomize"
+        onBack={() => ui.setRandomizeOpen(false)}
+        backRef={backButton}
+        endContent={
+          <Checkbox
+            label="Select all randomization options"
+            checked={allEnabled}
+            indeterminate={someEnabled}
+            onChange={setAllSwitches}
+          />
+        }
+      />
       <div className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-3 py-3">
         <div className="flex flex-col gap-3">
           <OptionGroup title="Placement" icon={<Layers />} open>
@@ -434,6 +336,7 @@ export function RandomizeSettings() {
                 max={SMOOTHNESS.length - 1}
                 step={1}
                 display=" step"
+                formatValue={(value) => `${value}${value === 1 ? " step" : " steps"}`}
                 setMin={(value) => setOption("blobSmoothnessMin", value)}
                 setMax={(value) => setOption("blobSmoothnessMax", value)}
               />
@@ -550,10 +453,11 @@ export function RandomizeSettings() {
                 label="Pattern opacity"
                 minValue={options.patternOpacityMin}
                 maxValue={options.patternOpacityMax}
-                min={0.02}
-                max={0.4}
+                min={PATTERN_OPACITY.min}
+                max={PATTERN_OPACITY.max}
                 step={0.02}
                 display="%"
+                displayFactor={100}
                 setMin={(value) => setOption("patternOpacityMin", value)}
                 setMax={(value) => setOption("patternOpacityMax", value)}
               />
@@ -570,8 +474,8 @@ export function RandomizeSettings() {
                 label="Pattern scale"
                 minValue={options.patternScaleMin}
                 maxValue={options.patternScaleMax}
-                min={0.5}
-                max={8}
+                min={PATTERN_SCALE.min}
+                max={PATTERN_SCALE.max}
                 step={0.1}
                 display="×"
                 setMin={(value) => setOption("patternScaleMin", value)}
@@ -601,44 +505,6 @@ export function RandomizeSettings() {
         </Button>
       </div>
     </section>
-  );
-}
-
-function OptionSwitch({
-  id,
-  label,
-  checked,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <div className="flex min-h-9 items-center justify-between gap-3">
-      <span id={`${id}-label`} className="text-sm">
-        {label}
-      </span>
-      <button
-        type="button"
-        role="switch"
-        aria-labelledby={`${id}-label`}
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={`group relative inline-flex h-8 w-[52px] shrink-0 items-center rounded-full border-2 p-0 focus-ring transition-[background-color,border-color] duration-300 ease-effect ${checked ? "border-primary bg-primary" : "border-outline-variant bg-surface-container-high"}`}
-      >
-        <span
-          className={`absolute top-1/2 left-[6px] inline-flex shrink-0 -translate-y-1/2 items-center justify-center rounded-full transition-[width,height,background-color,translate] duration-300 ease-spring active:size-7 ${checked ? "size-6 translate-x-3 bg-on-primary text-primary" : "size-4 bg-on-surface-variant text-transparent"}`}
-        >
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-1/2 size-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-on-surface/10 opacity-0 transition-opacity group-hover:opacity-100"
-          />
-          {checked && <Check aria-hidden="true" className="size-4" />}
-        </span>
-      </button>
-    </div>
   );
 }
 
@@ -684,6 +550,7 @@ function RangeFields({
   step,
   display,
   displayFactor = 1,
+  formatValue,
   setMin,
   setMax,
 }: {
@@ -696,15 +563,12 @@ function RangeFields({
   step: number;
   display: string;
   displayFactor?: number;
+  formatValue?: (value: number) => string;
   setMin: (value: number) => void;
   setMax: (value: number) => void;
 }) {
-  const formatted = (value: number) => {
-    const displayedValue = +(value * displayFactor).toFixed(2);
-    const suffix =
-      display.trim() === "step" ? (displayedValue === 1 ? " step" : " steps") : display;
-    return `${displayedValue}${suffix}`;
-  };
+  const formatted = (value: number) =>
+    formatValue?.(value) ?? `${+(value * displayFactor).toFixed(2)}${display}`;
   return (
     <>
       <SliderField
@@ -730,47 +594,5 @@ function RangeFields({
         onChange={(value) => setMax(Math.max(value, minValue))}
       />
     </>
-  );
-}
-
-function SliderField({
-  id,
-  icon,
-  label,
-  value,
-  min,
-  max,
-  step,
-  display,
-  description,
-  onChange,
-}: {
-  id: string;
-  icon: ReactNode;
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  display: string;
-  description?: string;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-0.5 pl-2">
-      <FieldLabel icon={icon} htmlFor={id} value={display}>
-        {label}
-      </FieldLabel>
-      <Slider
-        id={id}
-        label={label}
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={onChange}
-      />
-      {description && <span className="pl-7 text-xs text-on-surface-variant">{description}</span>}
-    </div>
   );
 }

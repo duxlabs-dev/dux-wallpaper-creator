@@ -81,6 +81,18 @@ export const resizeAroundCenter = (layer: Layer, size: number, canvas: Size): La
   return { ...layer, size: nextSize, x: centerX - nextSize / 2, y: centerY - nextSize / 2 };
 };
 
+export const withSpec = (layer: Layer, spec: ShapeSpec): Layer => {
+  const next: Layer = { ...layer, ...spec };
+  if (isBlob(spec)) {
+    delete next.shape;
+  } else {
+    delete next.path;
+    delete next.points;
+    delete next.smoothness;
+  }
+  return next;
+};
+
 export const rescaleLayers = (layers: Layer[], fromSize: Size, toSize: Size): Layer[] => {
   if (fromSize.width === toSize.width && fromSize.height === toSize.height) return layers;
   const scaleFactor = Math.sqrt(

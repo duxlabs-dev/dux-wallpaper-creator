@@ -10,7 +10,7 @@ import { ShapeTab } from "./shape-tab";
 import { Toolbar } from "./toolbar";
 import { Add, Shapes, Tune } from "material-symbols/rounded";
 import { Shapes as ShapesFilled } from "material-symbols/rounded/filled";
-import { RandomizeMenu, RandomizeSettings } from "./randomize-menu";
+import { RandomizeButton, RandomizeSettings } from "./randomize-menu";
 
 const tabs = [
   {
@@ -85,7 +85,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
               )}
             </div>
             <div className="flex items-center gap-2 px-2 py-3">
-              <RandomizeMenu mini />
+              <RandomizeButton mini={false} />
               <AddShapeButton mini={false} />
             </div>
           </div>
@@ -100,7 +100,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
         </div>
         {mini && (
           <div className="align-center flex flex-col items-center gap-2 pb-3">
-            <RandomizeMenu mini />
+            <RandomizeButton mini />
             <AddShapeButton mini />
           </div>
         )}

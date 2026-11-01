@@ -1,12 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useFocusReturn } from "@/hooks/ui/use-focus-return";
-import { IconButton } from "@/components/ui/icon-button";
+import { SubpageHeader } from "@/components/ui/subpage-header";
 import type { ShapeSpec } from "@/lib/layer";
-import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { selectActive, useWallpaper, wallpaper, wallpaperStore } from "@/store/wallpaper";
 import { ui, useUi, type PickMode } from "@/store/ui";
 import { ShapeGrid } from "./shape-grid";
-import { ArrowBack } from "material-symbols/rounded";
 
 export const pickShape = (mode: PickMode, spec: ShapeSpec) => {
   if (mode === "replace" && wallpaperStore.state.activeId) wallpaper.replaceActiveShape(spec);
@@ -33,19 +31,11 @@ export function ShapePicker() {
       data-open={open}
       className="absolute inset-0 flex flex-col bg-surface-container pt-2 transition-[translate,opacity] duration-450 ease-emphasized group-data-[panel=mini]/panel:hidden data-[open=false]:translate-x-full"
     >
-      <div className="flex items-center gap-2 border-b border-outline-variant px-1 pb-2">
-        <IconButton
-          ref={back}
-          label="Back (Esc)"
-          aria-keyshortcuts={ariaKeyshortcuts("Escape")}
-          onClick={ui.closePicker}
-        >
-          <ArrowBack />
-        </IconButton>
-        <span className="text-base font-semibold whitespace-nowrap">
-          {replacing ? "Change shape" : "Add shape"}
-        </span>
-      </div>
+      <SubpageHeader
+        title={replacing ? "Change shape" : "Add shape"}
+        onBack={ui.closePicker}
+        backRef={back}
+      />
       <ShapeGrid
         className="min-h-0 flex-1 grid-cols-4 px-1 pt-3 pb-1"
         currentShape={replacing ? active?.shape : undefined}
