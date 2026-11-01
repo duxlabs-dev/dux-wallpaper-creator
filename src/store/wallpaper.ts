@@ -24,6 +24,7 @@ import {
   isBlob,
   randomBlob,
   randomShapeIndex,
+  SHAPES,
   shapeIndex,
   type SmoothnessIndex,
 } from "@/lib/shapes";
@@ -246,16 +247,38 @@ const randomizeLayers = (
   options: RandomizeOptions,
   currentPrefs: Prefs,
 ): { layers: Layer[]; prefs: Prefs; satisfied: boolean } => {
-  const boundsFor = (layer: Layer) => {
+  const extentFactorsFor = (layer: Layer) => {
     const angle = (layer.rot * Math.PI) / 180;
-    const halfWidth = (layer.size * (Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)))) / 2;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    if (!isBlob(layer) && /circle/i.test(SHAPES[layer.shape ?? 0].name)) return { x: 0.5, y: 0.5 };
+    if (isBlob(layer)) {
+      const rotatedPoints = layer.points.map((point) => {
+        const x = point.x - 0.5;
+        const y = point.y - 0.5;
+        return { x: x * cos - y * sin, y: x * sin + y * cos };
+      });
+      const xs = rotatedPoints.map((point) => point.x);
+      const ys = rotatedPoints.map((point) => point.y);
+      return {
+        x: (Math.max(...xs) - Math.min(...xs)) / 2,
+        y: (Math.max(...ys) - Math.min(...ys)) / 2,
+      };
+    }
+    const extent = (Math.abs(cos) + Math.abs(sin)) / 2;
+    return { x: extent, y: extent };
+  };
+  const boundsFor = (layer: Layer) => {
+    const extent = extentFactorsFor(layer);
+    const halfWidth = layer.size * extent.x;
+    const halfHeight = layer.size * extent.y;
     const centerX = layer.x + layer.size / 2;
     const centerY = layer.y + layer.size / 2;
     return {
       left: centerX - halfWidth,
       right: centerX + halfWidth,
-      top: centerY - halfWidth,
-      bottom: centerY + halfWidth,
+      top: centerY - halfHeight,
+      bottom: centerY + halfHeight,
     };
   };
   const gapFor = (a: Layer, b: Layer) => {
@@ -309,6 +332,15 @@ const randomizeLayers = (
       if (overlapCount > options.maxOverlapCount) hard += candidate.size;
       if (placed.length && overlapCount < options.minOverlapCount)
         soft += (options.minOverlapCount - overlapCount) * candidate.size;
+      for (const other of placed) {
+        const previousCount = overlapCountFor(
+          other,
+          placed.filter((layer) => layer !== other),
+        );
+        const nextCount = previousCount + Number(overlapFor(candidate, other) > 0);
+        if (nextCount < options.minOverlapCount)
+          soft += (options.minOverlapCount - nextCount) * other.size;
+      }
     }
     return { hard, soft };
   };
@@ -373,11 +405,19 @@ const randomizeLayers = (
     }
     if (options.rotation)
       layer = { ...layer, rot: normDeg(rnd(-options.rotationRange, options.rotationRange)) };
-    if (!options.canvasSpill) {
-      const angle = (layer.rot * Math.PI) / 180;
-      const rotatedExtent = Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle));
-      const maxSize = Math.min(canvas.width, canvas.height) / rotatedExtent;
-      if (layer.size > maxSize) {
+    if (options.size && !options.canvasSpill && (options.positionX || options.positionY)) {
+      const extent = extentFactorsFor(layer);
+      const centerX = layer.x + layer.size / 2;
+      const centerY = layer.y + layer.size / 2;
+      const maxWidth = options.positionX
+        ? canvas.width / (2 * extent.x)
+        : Math.min(centerX, canvas.width - centerX) / extent.x;
+      const maxHeight = options.positionY
+        ? canvas.height / (2 * extent.y)
+        : Math.min(centerY, canvas.height - centerY) / extent.y;
+      const maxSize = Math.max(0, Math.min(maxWidth, maxHeight));
+      const minimumSize = (options.sizeMin / 100) * Math.min(canvas.width, canvas.height);
+      if (maxSize >= minimumSize && layer.size > maxSize) {
         const size = maxSize;
         layer = {
           ...layer,
@@ -401,24 +441,29 @@ const randomizeLayers = (
           : 1;
       const validCandidates: { layer: Layer; overlaps: number; spread: number }[] = [];
       for (let attempt = 0; attempt < 240; attempt += 1) {
-        const angle = (layer.rot * Math.PI) / 180;
-        const halfExtent =
-          (layer.size * (Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)))) / 2;
+        const extent = extentFactorsFor(layer);
+        const halfWidth = layer.size * extent.x;
+        const halfHeight = layer.size * extent.y;
         const bleed = options.canvasSpill ? (options.bleed / 100) * layer.size : 0;
-        const randomPosition = (extent: number, current: number) => {
-          const min = halfExtent - layer.size / 2 - bleed;
-          const max = extent - halfExtent - layer.size / 2 + bleed;
+        const randomPosition = (extent: number, halfShape: number, current: number) => {
+          const min = halfShape - layer.size / 2 - bleed;
+          const max = extent - halfShape - layer.size / 2 + bleed;
           return max >= min ? Math.round(rnd(min, max)) : current;
         };
         const candidate = {
           ...layer,
-          x: options.positionX ? randomPosition(canvas.width, layer.x) : layer.x,
-          y: options.positionY ? randomPosition(canvas.height, layer.y) : layer.y,
+          x: options.positionX ? randomPosition(canvas.width, halfWidth, layer.x) : layer.x,
+          y: options.positionY ? randomPosition(canvas.height, halfHeight, layer.y) : layer.y,
         };
         const candidateScore = score(candidate, placed);
-        const candidateSpread = placed.length
-          ? placed.reduce((total, other) => total + gapFor(candidate, other), 0)
-          : Number.POSITIVE_INFINITY;
+        const bounds = boundsFor(candidate);
+        const candidateSpread = Math.min(
+          bounds.left,
+          canvas.width - bounds.right,
+          bounds.top,
+          canvas.height - bounds.bottom,
+          ...placed.map((other) => gapFor(candidate, other)),
+        );
         if (
           candidateScore.hard < bestScore.hard ||
           (candidateScore.hard === bestScore.hard && candidateScore.soft < bestScore.soft)
@@ -473,36 +518,34 @@ const randomizeLayers = (
       ];
     }
   }
-  const satisfied =
-    (!options.positionX && !options.positionY) ||
-    placed.every((layer, index) => {
-      const bounds = boundsFor(layer);
-      if (
-        !options.canvasSpill &&
-        (bounds.left < 0 ||
-          bounds.top < 0 ||
-          bounds.right > canvas.width ||
-          bounds.bottom > canvas.height)
-      )
-        return false;
-      const neighbors = placed.filter((other) => other !== layer && overlapFor(layer, other) > 0);
-      if (
-        options.limitOverlapCount &&
-        (neighbors.length < options.minOverlapCount || neighbors.length > options.maxOverlapCount)
-      )
-        return false;
-      for (const other of placed.slice(0, index)) {
-        const overlap = Math.max(0, overlapFor(layer, other));
-        if (overlap > 0 && !options.allowOverlap) return false;
-        if (options.minimumGap && overlap === 0 && gapFor(layer, other) < options.gap) return false;
-        if (options.allowOverlap && overlap > 0) {
-          const smallerSize = Math.min(layer.size, other.size);
-          if (overlap < (smallerSize * options.overlapMin) / 100) return false;
-          if (overlap > (smallerSize * options.overlapMax) / 100) return false;
-        }
+  const satisfied = placed.every((layer, index) => {
+    const bounds = boundsFor(layer);
+    if (
+      !options.canvasSpill &&
+      (bounds.left < 0 ||
+        bounds.top < 0 ||
+        bounds.right > canvas.width ||
+        bounds.bottom > canvas.height)
+    )
+      return false;
+    const neighbors = placed.filter((other) => other !== layer && overlapFor(layer, other) > 0);
+    if (
+      options.limitOverlapCount &&
+      (neighbors.length < options.minOverlapCount || neighbors.length > options.maxOverlapCount)
+    )
+      return false;
+    for (const other of placed.slice(0, index)) {
+      const overlap = Math.max(0, overlapFor(layer, other));
+      if (overlap > 0 && !options.allowOverlap) return false;
+      if (options.minimumGap && overlap === 0 && gapFor(layer, other) < options.gap) return false;
+      if (options.allowOverlap && overlap > 0) {
+        const smallerSize = Math.min(layer.size, other.size);
+        if (overlap < (smallerSize * options.overlapMin) / 100) return false;
+        if (overlap > (smallerSize * options.overlapMax) / 100) return false;
       }
-      return true;
-    });
+    }
+    return true;
+  });
   return {
     layers: randomizedLayers,
     prefs,

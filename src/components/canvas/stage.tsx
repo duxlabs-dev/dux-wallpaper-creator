@@ -9,6 +9,7 @@ import {
 import { usePatternTile } from "@/hooks/use-pattern-tile";
 import { layerPath, layerTransform } from "@/lib/layer";
 import { patternUrl } from "@/lib/patterns";
+import { keyLabel } from "@/lib/shortcut-keys";
 import { normDeg } from "@/lib/utils";
 import { selectActive, useWallpaper, wallpaper, wallpaperStore } from "@/store/wallpaper";
 import { ui } from "@/store/ui";
@@ -19,6 +20,7 @@ interface StageProps {
 }
 
 const DRAG_THRESHOLD = 5;
+const SNAP_HINT_LIMIT = 3;
 const layerIdOf = (target: EventTarget | null) =>
   (target as Element | null)?.closest?.("[data-id]")?.getAttribute("data-id") ?? null;
 
@@ -31,7 +33,7 @@ export function Stage({ scale }: StageProps) {
     patternScale: state.prefs.patternScale,
   }));
   const active = useWallpaper(selectActive);
-  const snapHintShown = useRef(false);
+  const snapHintCount = useRef(0);
   const [snapGuides, setSnapGuides] = useState({
     vertical: [] as number[],
     horizontal: [] as number[],
@@ -84,26 +86,34 @@ export function Stage({ scale }: StageProps) {
     if (!start) return;
     const origin = { x: event.clientX, y: event.clientY, lx: start.x, ly: start.y };
     let moved = false;
+    let showedSnapHint = false;
 
     const move = (pointerEvent: PointerEvent) => {
       const deltaX = pointerEvent.clientX - origin.x;
       const deltaY = pointerEvent.clientY - origin.y;
       if (!moved && Math.hypot(deltaX, deltaY) < DRAG_THRESHOLD) return;
       moved = true;
-      if (!snapHintShown.current) {
-        snapHintShown.current = true;
+      if (!showedSnapHint) {
+        showedSnapHint = true;
         try {
-          if (localStorage.getItem("dux-snap-hint-shown") !== "true") {
-            localStorage.setItem("dux-snap-hint-shown", "true");
-            ui.showToast("Hold Ctrl / Cmd while dragging to snap");
+          const shown = Number(localStorage.getItem("dux-snap-hint-count") ?? 0);
+          if (shown < SNAP_HINT_LIMIT) {
+            localStorage.setItem("dux-snap-hint-count", String(shown + 1));
+            ui.showToast(`Hold ${keyLabel("Mod")} while dragging to snap`);
           }
         } catch {
-          ui.showToast("Hold Ctrl / Cmd while dragging to snap");
+          if (snapHintCount.current < SNAP_HINT_LIMIT) {
+            snapHintCount.current += 1;
+            ui.showToast(`Hold ${keyLabel("Mod")} while dragging to snap`);
+          }
         }
       }
       const x = origin.lx + deltaX / scaleRef.current;
       const y = origin.ly + deltaY / scaleRef.current;
-      if (pointerEvent.ctrlKey || pointerEvent.metaKey) {
+      const snapModifier =
+        pointerEvent.metaKey ||
+        (pointerEvent.ctrlKey && !/Mac|iPhone|iPad/.test(navigator.platform));
+      if (snapModifier) {
         setSnapGuides(wallpaper.snapActiveTo(x, y, true) ?? { vertical: [], horizontal: [] });
       } else {
         setSnapGuides({ vertical: [], horizontal: [] });

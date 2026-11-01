@@ -203,6 +203,7 @@ export const useShortcuts = () => {
         enabled: !overlay,
         ignoreInputs: true,
       }),
+      bind("Alt+R", () => ui.setRandomizeOpen(true), { enabled: live }),
       bind("?", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
       bind("F1", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
       bind("F6", () => switchZone("start", canvasFocused), {

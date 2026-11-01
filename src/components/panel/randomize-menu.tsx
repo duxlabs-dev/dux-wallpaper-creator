@@ -10,8 +10,7 @@ import {
   ArrowBack,
   Casino,
   Check,
-  ExpandCircleDown,
-  ExpandCircleRight,
+  KeyboardArrowDown,
   Layers,
   OpenInFull,
   Palette,
@@ -87,6 +86,10 @@ const SWITCH_KEYS = [
   "patternOpacity",
   "patternScale",
   "layerOrder",
+  "minimumGap",
+  "allowOverlap",
+  "limitOverlapCount",
+  "canvasSpill",
 ] as const satisfies readonly (keyof RandomizeOptions)[];
 
 export function RandomizeMenu({ mini = false }: { mini?: boolean } = {}) {
@@ -167,8 +170,12 @@ export function RandomizeSettings() {
       patternOpacity: value,
       patternScale: value,
       layerOrder: value,
+      minimumGap: value,
       allowOverlap: value,
+      limitOverlapCount: value,
       canvasSpill: value,
+      sizeMin: value ? current.sizeMin : Math.min(current.sizeMin, 100),
+      sizeMax: value ? current.sizeMax : Math.min(current.sizeMax, 100),
     }));
 
   const randomize = () => {
@@ -201,8 +208,18 @@ export function RandomizeSettings() {
               aria-checked={someEnabled ? "mixed" : allEnabled}
               checked={allEnabled}
               onChange={() => setAllSwitches(!allEnabled)}
-              className="size-5 cursor-pointer accent-primary"
+              className="peer absolute size-5 cursor-pointer opacity-0"
             />
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none flex size-[18px] items-center justify-center rounded-[4px] border-2 transition-colors ${allEnabled || someEnabled ? "border-primary bg-primary text-on-primary" : "border-on-surface-variant text-transparent"} peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary`}
+            >
+              {someEnabled ? (
+                <span className="h-0.5 w-2.5 rounded-full bg-current" />
+              ) : (
+                allEnabled && <Check aria-hidden="true" className="size-3.5" />
+              )}
+            </span>
           </label>
         </div>
       </header>
@@ -311,24 +328,42 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("limitOverlapCount", value)}
             />
             {options.limitOverlapCount && (
-              <RangeFields
-                prefix="overlap-count"
-                label="Overlapping neighbors"
-                minValue={options.minOverlapCount}
-                maxValue={options.maxOverlapCount}
-                min={0}
-                max={40}
-                step={1}
-                display=""
-                setMin={(value) => setOption("minOverlapCount", value)}
-                setMax={(value) => setOption("maxOverlapCount", value)}
-              />
+              <>
+                <RangeFields
+                  prefix="overlap-count"
+                  label="Overlapping neighbors"
+                  minValue={options.minOverlapCount}
+                  maxValue={options.maxOverlapCount}
+                  min={0}
+                  max={40}
+                  step={1}
+                  display=""
+                  setMin={(value) => setOption("minOverlapCount", value)}
+                  setMax={(value) => setOption("maxOverlapCount", value)}
+                />
+                {!options.allowOverlap && options.minOverlapCount > 0 && (
+                  <p role="status" className="m-0 text-xs text-on-surface-variant">
+                    Minimum neighbors requires overlap; no-overlap takes priority.
+                  </p>
+                )}
+              </>
             )}
             <OptionSwitch
               id="randomize-spill"
               label="Allow shapes beyond canvas"
               checked={options.canvasSpill}
-              onChange={(value) => setOption("canvasSpill", value)}
+              onChange={(value) =>
+                setOptions((current) => ({
+                  ...current,
+                  canvasSpill: value,
+                  ...(!value
+                    ? {
+                        sizeMin: Math.min(current.sizeMin, 100),
+                        sizeMax: Math.min(current.sizeMax, 100),
+                      }
+                    : {}),
+                }))
+              }
             />
             {options.canvasSpill && (
               <SliderField
@@ -416,7 +451,7 @@ export function RandomizeSettings() {
                 minValue={options.sizeMin}
                 maxValue={options.sizeMax}
                 min={5}
-                max={200}
+                max={options.canvasSpill ? 200 : 100}
                 step={5}
                 display="%"
                 setMin={(value) => setOption("sizeMin", value)}
@@ -591,14 +626,14 @@ function OptionSwitch({
         aria-labelledby={`${id}-label`}
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`group relative inline-flex h-8 w-[52px] shrink-0 items-center rounded-full border-2 p-[6px] focus-ring transition-[background-color,border-color] duration-300 ease-effect ${checked ? "justify-end border-primary bg-primary" : "justify-start border-outline-variant bg-surface-container-high"}`}
+        className={`group relative inline-flex h-8 w-[52px] shrink-0 items-center rounded-full border-2 p-0 focus-ring transition-[background-color,border-color] duration-300 ease-effect ${checked ? "border-primary bg-primary" : "border-outline-variant bg-surface-container-high"}`}
       >
         <span
-          className={`group/handle relative inline-flex shrink-0 items-center justify-center rounded-full transition-[width,height,background-color,translate] duration-300 ease-spring ${checked ? "size-6 translate-x-1 bg-on-primary text-primary" : "size-4 bg-on-surface-variant text-transparent"}`}
+          className={`absolute top-1/2 left-[6px] inline-flex shrink-0 -translate-y-1/2 items-center justify-center rounded-full transition-[width,height,background-color,translate] duration-300 ease-spring active:size-7 ${checked ? "size-6 translate-x-3 bg-on-primary text-primary" : "size-4 bg-on-surface-variant text-transparent"}`}
         >
           <span
             aria-hidden="true"
-            className="pointer-events-none absolute -inset-3 rounded-full bg-on-surface/10 opacity-0 transition-opacity group-hover/handle:opacity-100"
+            className="pointer-events-none absolute top-1/2 left-1/2 size-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-on-surface/10 opacity-0 transition-opacity group-hover:opacity-100"
           />
           {checked && <Check aria-hidden="true" className="size-4" />}
         </span>
@@ -625,16 +660,14 @@ function OptionGroup({
       onToggle={(event) => setExpanded(event.currentTarget.open)}
       className="group"
     >
-      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-2xl px-3 text-[15px] font-medium focus-ring hover:state-layer-8 active:state-layer-12 [&::-webkit-details-marker]:hidden">
-        <span className="flex size-6 shrink-0 items-center justify-center text-on-surface-variant [&>svg]:size-6">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-2xl px-1 text-[15px] focus-ring hover:state-layer-8 active:state-layer-12 [&::-webkit-details-marker]:hidden">
+        <span className="flex-1 font-semibold">{title}</span>
+        <span className="flex size-6 shrink-0 items-center justify-center text-on-surface-variant [&>svg]:size-5">
           {icon}
         </span>
-        <span className="flex-1">{title}</span>
-        {expanded ? (
-          <ExpandCircleDown className="size-5 text-on-surface-variant" />
-        ) : (
-          <ExpandCircleRight className="size-5 text-on-surface-variant" />
-        )}
+        <KeyboardArrowDown
+          className={`size-5 shrink-0 text-on-surface-variant transition-transform duration-300 ease-effect ${expanded ? "rotate-180" : "rotate-0"}`}
+        />
       </summary>
       <div className="flex flex-col gap-2 pb-2 pl-1">{children}</div>
     </details>
