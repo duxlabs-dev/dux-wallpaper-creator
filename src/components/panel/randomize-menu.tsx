@@ -116,7 +116,7 @@ export function RandomizeButton({ mini }: { mini: boolean }) {
     <IconButton
       ref={button}
       label="Randomize"
-      title="Click to randomize (Alt+R); hold 250 ms for options"
+      title="Click to randomize (Alt+R); hold 250 ms or press Alt+Shift+R for options"
       aria-controls="panel-randomize"
       aria-expanded={open}
       aria-keyshortcuts={ariaKeyshortcuts("Alt+R")}
