@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
+import { ui } from "@/store/ui";
 import { wallpaper } from "@/store/wallpaper";
 import { DeleteForever } from "material-symbols/rounded";
 import { FormatPicker } from "./format-picker";
@@ -12,6 +13,10 @@ export function CanvasTab() {
   const [resetProgress, setResetProgress] = useState(0);
 
   const cancelHold = () => {
+    if (holdStarted.current !== null) {
+      const elapsed = performance.now() - holdStarted.current;
+      if (elapsed < 500) ui.showToast("Hold the button to clear everything.", 2000);
+    }
     holdStarted.current = null;
     if (animationFrame.current !== null) cancelAnimationFrame(animationFrame.current);
     animationFrame.current = null;
