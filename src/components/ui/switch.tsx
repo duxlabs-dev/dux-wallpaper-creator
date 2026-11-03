@@ -77,7 +77,7 @@ export function Switch({ id, label, checked, onChange, tooltip, icon, className 
   );
 
   return (
-    <div className={cn("flex min-h-10 items-center justify-between gap-3 px-1 py-1.5", className)}>
+    <div className={cn("flex min-h-10 items-center justify-between gap-3 px-0 py-1.5", className)}>
       <span
         id={`${id}-label`}
         className="flex min-w-0 items-center gap-2 text-sm font-semibold text-on-surface"

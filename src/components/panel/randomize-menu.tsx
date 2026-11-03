@@ -176,7 +176,6 @@ export function RandomizeSettings() {
                 label="Shape count"
                 checked={options.shapeCount}
                 icon={<Numbers />}
-                className="px-1.5"
                 onChange={(value) => setOption("shapeCount", value)}
               />
               {options.shapeCount && (
@@ -199,7 +198,6 @@ export function RandomizeSettings() {
               label="Horizontal position"
               checked={options.positionX}
               icon={<SwapHoriz />}
-              className="px-1.5"
               tooltip="Randomizes each layer’s horizontal offset within the canvas."
               onChange={(value) => setOption("positionX", value)}
             />
@@ -208,7 +206,6 @@ export function RandomizeSettings() {
               label="Vertical position"
               checked={options.positionY}
               icon={<SwapVert />}
-              className="px-1.5"
               tooltip="Randomizes each layer’s vertical offset within the canvas."
               onChange={(value) => setOption("positionY", value)}
             />
@@ -222,7 +219,6 @@ export function RandomizeSettings() {
               step={5}
               display={`${options.spreadStrength}%`}
               tooltip="Controls how dispersed the shapes spread across the canvas."
-              className="px-1"
               onChange={(value) => setOption("spreadStrength", value)}
             />
             <div className="flex flex-col gap-2">
@@ -231,7 +227,6 @@ export function RandomizeSettings() {
                 label="Keep a minimum gap"
                 checked={options.minimumGap}
                 icon={<Distance />}
-                className="px-1.5"
                 tooltip="Keeps shapes separated by a minimum distance to avoid overlap and crowding."
                 onChange={(value) => setOption("minimumGap", value)}
               />
@@ -245,6 +240,7 @@ export function RandomizeSettings() {
                   max={400}
                   step={8}
                   display={`${options.gap} px`}
+                  className="pl-6"
                   onChange={(value) => setOption("gap", value)}
                 />
               )}
@@ -255,7 +251,6 @@ export function RandomizeSettings() {
                 label="Allow overlap"
                 checked={options.allowOverlap}
                 icon={<Layers />}
-                className="px-1.5"
                 tooltip="Allows shapes to overlap instead of staying separate."
                 onChange={(value) => setOption("allowOverlap", value)}
               />
@@ -271,6 +266,7 @@ export function RandomizeSettings() {
                     step={1}
                     display={`${options.overlapMin}%`}
                     tooltip="Only applies to shapes that overlap; it does not force overlap."
+                    className="pl-6"
                     onChange={(value) => setOption("overlapMin", Math.min(value, options.overlapMax))}
                   />
                   <SliderField
@@ -283,6 +279,7 @@ export function RandomizeSettings() {
                     step={1}
                     display={`${options.overlapMax}%`}
                     tooltip="Caps how much one shape can overlap another."
+                    className="pl-6"
                     onChange={(value) => setOption("overlapMax", Math.max(value, options.overlapMin))}
                   />
                 </>
@@ -294,7 +291,6 @@ export function RandomizeSettings() {
                 label="Limit overlapping neighbors"
                 checked={options.limitOverlapCount}
                 icon={<FilterAlt />}
-                className="px-1.5"
                 tooltip="Caps how many neighboring shapes can overlap each layer."
                 onChange={(value) => setOption("limitOverlapCount", value)}
               />
@@ -326,7 +322,6 @@ export function RandomizeSettings() {
                 label="Allow shapes beyond canvas"
                 checked={options.canvasSpill}
                 icon={<OpenInFull />}
-                className="px-1.5"
                 tooltip="Lets shapes extend outside the canvas instead of staying fully within bounds."
                 onChange={(value) =>
                   setOptions((current) => ({
@@ -351,6 +346,7 @@ export function RandomizeSettings() {
                   max={100}
                   step={5}
                   display={`${options.bleed}%`}
+                  className="pl-6"
                   onChange={(value) => setOption("bleed", value)}
                 />
               )}
@@ -361,7 +357,6 @@ export function RandomizeSettings() {
               id="randomize-shape-type"
               label="Shape or blob type"
               checked={options.shapeType}
-              className="px-1.5"
               tooltip="Switches some layers between regular shapes and blob forms."
               onChange={(value) => setOption("shapeType", value)}
             />
@@ -369,7 +364,6 @@ export function RandomizeSettings() {
               id="randomize-shape-index"
               label="Randomize shape"
               checked={options.shapeIndex}
-              className="px-1.5"
               tooltip="Chooses a different shape variant for each layer."
               onChange={(value) => setOption("shapeIndex", value)}
             />
@@ -377,7 +371,6 @@ export function RandomizeSettings() {
               id="randomize-blob-contour"
               label="Randomize blob shape"
               checked={options.blobContour}
-              className="px-1.5"
               tooltip="Randomizes the blob silhouette instead of keeping the same contour."
               onChange={(value) => setOption("blobContour", value)}
             />
@@ -385,7 +378,6 @@ export function RandomizeSettings() {
               id="randomize-blob-edges"
               label="Blob edge count"
               checked={options.blobEdges}
-              className="px-1.5"
               tooltip="Changes how many edges the blob uses."
               onChange={(value) => setOption("blobEdges", value)}
             />
@@ -407,7 +399,6 @@ export function RandomizeSettings() {
               id="randomize-blob-smoothness"
               label="Blob smoothness"
               checked={options.blobSmoothness}
-              className="px-1.5"
               tooltip="Adjusts how round or faceted the blob edges appear."
               onChange={(value) => setOption("blobSmoothness", value)}
             />
@@ -430,7 +421,6 @@ export function RandomizeSettings() {
               id="randomize-size"
               label="Shape size"
               checked={options.size}
-              className="px-1.5"
               tooltip="Randomizes the size range for each layer."
               onChange={(value) => setOption("size", value)}
             />
@@ -452,7 +442,6 @@ export function RandomizeSettings() {
               id="randomize-rotation"
               label="Rotation"
               checked={options.rotation}
-              className="px-1.5"
               tooltip="Randomizes each layer’s rotation angle."
               onChange={(value) => setOption("rotation", value)}
             />
@@ -466,7 +455,7 @@ export function RandomizeSettings() {
                 max={180}
                 step={15}
                 display={`±${options.rotationRange}°`}
-                className="px-0"
+                className="pl-6"
                 onChange={(value) => setOption("rotationRange", value)}
               />
             )}
@@ -474,7 +463,6 @@ export function RandomizeSettings() {
               id="randomize-opacity"
               label="Shape opacity"
               checked={options.opacity}
-              className="px-1.5"
               tooltip="Randomizes each layer’s transparency."
               onChange={(value) => setOption("opacity", value)}
             />
@@ -498,7 +486,6 @@ export function RandomizeSettings() {
               id="randomize-hue"
               label="Hue"
               checked={options.hue}
-              className="px-1.5"
               tooltip="Shifts each layer’s hue within a range."
               onChange={(value) => setOption("hue", value)}
             />
@@ -512,7 +499,7 @@ export function RandomizeSettings() {
                 max={180}
                 step={5}
                 display={`±${options.hueRange}°`}
-                className="px-0"
+                className="pl-6"
                 onChange={(value) => setOption("hueRange", value)}
               />
             )}
@@ -520,7 +507,6 @@ export function RandomizeSettings() {
               id="randomize-fill"
               label="Fill color"
               checked={options.fill}
-              className="px-1.5"
               tooltip="Randomizes which fill color each shape uses."
               onChange={(value) => setOption("fill", value)}
             />
@@ -528,7 +514,6 @@ export function RandomizeSettings() {
               id="randomize-overlap-color"
               label="Overlap color"
               checked={options.overlapColor}
-              className="px-1.5"
               tooltip="Randomizes the color used where layers overlap."
               onChange={(value) => setOption("overlapColor", value)}
             />
@@ -538,7 +523,6 @@ export function RandomizeSettings() {
               id="randomize-pattern"
               label="Pattern selection"
               checked={options.pattern}
-              className="px-1.5"
               tooltip="Chooses a different background pattern at random."
               onChange={(value) => setOption("pattern", value)}
             />
@@ -546,7 +530,6 @@ export function RandomizeSettings() {
               id="randomize-pattern-opacity"
               label="Pattern opacity"
               checked={options.patternOpacity}
-              className="px-1.5"
               tooltip="Randomizes how visible the background pattern is."
               onChange={(value) => setOption("patternOpacity", value)}
             />
@@ -569,7 +552,6 @@ export function RandomizeSettings() {
               id="randomize-pattern-scale"
               label="Pattern scale"
               checked={options.patternScale}
-              className="px-1.5"
               tooltip="Randomizes the size of the background pattern tiles."
               onChange={(value) => setOption("patternScale", value)}
             />
@@ -593,7 +575,6 @@ export function RandomizeSettings() {
               id="randomize-layer-order"
               label="Shuffle stacking order"
               checked={options.layerOrder}
-              className="px-1.5"
               tooltip="Randomizes which layers appear on top of others."
               onChange={(value) => setOption("layerOrder", value)}
             />
@@ -687,6 +668,7 @@ function RangeFields({
         max={max}
         step={step}
         display={formatted(minValue)}
+        className="pl-6"
         onChange={(value) => setMin(Math.min(value, maxValue))}
       />
       <SliderField
@@ -698,6 +680,7 @@ function RangeFields({
         max={max}
         step={step}
         display={formatted(maxValue)}
+        className="pl-6"
         onChange={(value) => setMax(Math.max(value, minValue))}
       />
     </>
