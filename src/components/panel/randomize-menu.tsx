@@ -9,6 +9,7 @@ import { BLOB_MAX_EDGES, BLOB_MIN_EDGES, SMOOTHNESS } from "@/lib/shapes";
 import { PATTERN_OPACITY, PATTERN_SCALE } from "@/lib/patterns";
 import type { RandomizeOptions } from "@/lib/randomize";
 import {
+  incrementCounter,
   loadRandomizeOptions,
   persistRandomizeOptions,
   subscribeToRandomizeOptionsReset,
@@ -135,7 +136,8 @@ export function RandomizeButton({ mini }: { mini: boolean }) {
       onPointerLeave={clearHoldTimer}
       onClick={() => {
         if (uiStore.state.randomizeOpen) return;
-        randomizeWithOptions();
+        const showDiscoveryHint = incrementCounter("dux-randomize-options-hint-count", 3);
+        randomizeWithOptions(undefined, showDiscoveryHint);
       }}
     >
       <Casino />
