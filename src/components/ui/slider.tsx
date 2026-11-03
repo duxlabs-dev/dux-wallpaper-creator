@@ -57,7 +57,10 @@ export function Slider({
   const pointerFocus = useRef(false);
 
   const valueRef = useRef(value);
-  valueRef.current = value;
+
+  useLayoutEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   useLayoutEffect(() => {
     const element = wrap.current;

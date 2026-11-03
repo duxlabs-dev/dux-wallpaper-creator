@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { useRipple } from "@/hooks/ui/use-ripple";
 import { cn } from "@/lib/utils";
 
@@ -17,9 +18,16 @@ export const buttonVariants: Record<ButtonVariant, string> = {
     "bg-error-container text-on-error-container hover:state-layer-8 disabled:bg-on-surface/10",
 };
 
-export function Button({ variant = "tonal", className, onClick, ref, ...rest }: ButtonProps) {
+export function Button({
+  variant = "tonal",
+  className,
+  onClick,
+  ref,
+  title,
+  ...rest
+}: ButtonProps) {
   const ripple = useRipple({ ref });
-  return (
+  const button = (
     <button
       type="button"
       ref={ripple}
@@ -35,4 +43,6 @@ export function Button({ variant = "tonal", className, onClick, ref, ...rest }: 
       {...rest}
     />
   );
+
+  return title ? <DelayedTooltip content={title}>{button}</DelayedTooltip> : button;
 }

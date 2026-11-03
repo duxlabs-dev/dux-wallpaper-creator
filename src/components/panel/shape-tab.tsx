@@ -130,6 +130,7 @@ export function ShapeTab() {
             step={1}
             ticks
             display={active.points.length}
+            tooltip="Sets how many points make up the blob outline."
             onChange={(value) => wallpaper.patchActive({ ...createBlob(value, active.smoothness) })}
             onReset={() => wallpaper.patchActive({ ...randomBlob() })}
           />
@@ -143,6 +144,7 @@ export function ShapeTab() {
             step={1}
             ticks
             display={active.smoothness}
+            tooltip="Adjusts how rounded or faceted the blob contour is."
             onChange={(value) =>
               wallpaper.patchActive({
                 ...createBlob(active.points.length, value as SmoothnessIndex),
@@ -153,7 +155,7 @@ export function ShapeTab() {
         </>
       )}
       <div className="flex flex-col gap-2">
-        <FieldLabel icon={<FormatColorFill />} title="Fill color: 1–8, C cycles">
+        <FieldLabel icon={<FormatColorFill />} tooltip="Fill color: 1–8, C cycles">
           Color
         </FieldLabel>
         <RadioGroup<PaletteColor>
@@ -171,7 +173,7 @@ export function ShapeTab() {
       <div className="flex flex-col gap-2">
         <FieldLabel
           icon={<Layers />}
-          title="Overlap color: Shift+1–8, Shift+0 for none. The shape on top decides the overlap color where shapes meet."
+          tooltip="Overlap color: Shift+1–8, Shift+0 for none. The shape on top decides the overlap color where shapes meet."
           value={
             index === 0 ? (
               <span id="overlap-hint" className="text-xs font-normal">
@@ -212,7 +214,7 @@ export function ShapeTab() {
         max={LAYER_SIZE_PCT.max}
         step={1}
         display={`${size}%`}
-        title="Size: R and F (Shift for 10 px), or scroll"
+        tooltip="Adjusts the shape’s scale relative to the canvas."
         onChange={(value) =>
           wallpaper.resizeActive((value / 100) * Math.min(canvas.width, canvas.height))
         }
@@ -227,7 +229,7 @@ export function ShapeTab() {
         max={100}
         step={1}
         display={`${opacity}%`}
-        title="Opacity: T and G (Shift for 10%)"
+        tooltip="Sets how transparent the layer is."
         onChange={(value) =>
           wallpaper.patchActive({ opacity: value >= 100 ? undefined : value / 100 })
         }
@@ -243,7 +245,7 @@ export function ShapeTab() {
         max={359}
         step={1}
         display={`${rotation}°`}
-        title="Rotation: , and . or Q and E (Shift snaps to 15°)"
+        tooltip="Rotates the selected layer to a new angle."
         onChange={(value) => wallpaper.patchActive({ rot: value })}
         onReset={() => wallpaper.patchActive({ rot: 0 })}
       />
@@ -251,7 +253,7 @@ export function ShapeTab() {
       <div className="flex flex-col gap-2">
         <FieldLabel
           icon={<Stacks />}
-          title="Layer: U forward, J back (Shift jumps to front / back)"
+          tooltip="Layer: U forward, J back (Shift jumps to front / back)"
         >
           Layer
         </FieldLabel>

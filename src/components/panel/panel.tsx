@@ -1,4 +1,5 @@
 import { Tabs, TabsProps } from "@/components/ui/tabs";
+import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { focusCanvas } from "@/a11y/focus-zones";
 import { isLastFocusable } from "@/lib/focus-dom";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
@@ -124,25 +125,26 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
 function AddShapeButton({ mini }: { mini: boolean }) {
   const picking = useUi((state) => state.picker !== null);
   return (
-    <button
-      type="button"
-      title="Add a shape (N)"
-      aria-label="Add a shape"
-      aria-keyshortcuts={ariaKeyshortcuts("N")}
-      onClick={(event) => {
-        event.currentTarget.blur();
-        if (picking) ui.closePicker();
-        else ui.openPicker("add");
-      }}
-      className={cn(
-        "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-base leading-6 font-medium text-on-primary focus-ring morph [&>svg]:size-6",
-        mini
-          ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px]"
-          : "h-12 min-w-0 flex-1 rounded-3xl hover:state-layer-8 active:rounded-[14px] active:state-layer-12",
-      )}
-    >
-      <Add />
-      {!mini && "Add shape"}
-    </button>
+    <DelayedTooltip content="Add a shape (N)">
+      <button
+        type="button"
+        aria-label="Add a shape"
+        aria-keyshortcuts={ariaKeyshortcuts("N")}
+        onClick={(event) => {
+          event.currentTarget.blur();
+          if (picking) ui.closePicker();
+          else ui.openPicker("add");
+        }}
+        className={cn(
+          "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-base leading-6 font-medium text-on-primary focus-ring morph [&>svg]:size-6",
+          mini
+            ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px]"
+            : "active:state-layer-12 h-12 min-w-0 flex-1 rounded-3xl hover:state-layer-8 active:rounded-[14px]",
+        )}
+      >
+        <Add />
+        {!mini && "Add shape"}
+      </button>
+    </DelayedTooltip>
   );
 }

@@ -8,6 +8,7 @@ import { clamp } from "./utils";
 
 const KEY = "wallpaper-layout-v1";
 const RANDOMIZE_OPTIONS_KEY = "wallpaper-randomize-options-v1";
+const RANDOMIZE_OPTIONS_RESET_EVENT = "wallpaper-randomize-options-reset";
 const fallbackCounters = new Map<string, number>();
 
 export const incrementCounter = (key: string, limit: number, legacyKey?: string) => {
@@ -103,6 +104,18 @@ export const persistRandomizeOptions = (options: RandomizeOptions) => {
   } catch {
     // Randomizer preferences remain available for the current session.
   }
+};
+
+export const resetRandomizeOptions = () => {
+  persistRandomizeOptions(DEFAULT_RANDOMIZE_OPTIONS);
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(RANDOMIZE_OPTIONS_RESET_EVENT));
+};
+
+export const subscribeToRandomizeOptionsReset = (callback: () => void) => {
+  if (typeof window === "undefined") return () => {};
+  const listener = () => callback();
+  window.addEventListener(RANDOMIZE_OPTIONS_RESET_EVENT, listener);
+  return () => window.removeEventListener(RANDOMIZE_OPTIONS_RESET_EVENT, listener);
 };
 
 const migrateLegacyColors = (raw: Record<string, unknown>) => {

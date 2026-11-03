@@ -5,6 +5,7 @@ import {
   type HTMLAttributes,
   type KeyboardEvent,
 } from "react";
+import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { useRipple } from "@/hooks/ui/use-ripple";
 import { cn } from "@/lib/utils";
 
@@ -69,12 +70,12 @@ interface RadioItemProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   value: string;
 }
 
-export function RadioItem({ value, className, onClick, ...rest }: RadioItemProps) {
+export function RadioItem({ value, className, onClick, title, ...rest }: RadioItemProps) {
   const ripple = useRipple();
   const ctx = useContext(RadioContext);
   if (!ctx) throw new Error("RadioItem must be inside RadioGroup");
   const checked = ctx.value === value;
-  return (
+  const button = (
     <button
       type="button"
       ref={ripple}
@@ -90,4 +91,6 @@ export function RadioItem({ value, className, onClick, ...rest }: RadioItemProps
       {...rest}
     />
   );
+
+  return title ? <DelayedTooltip content={title}>{button}</DelayedTooltip> : button;
 }

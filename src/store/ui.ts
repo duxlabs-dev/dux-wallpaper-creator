@@ -61,7 +61,12 @@ function uiActions({
   const patch = (partial: Partial<UiState>) => setState((prev) => ({ ...prev, ...partial }));
 
   const setPanel = (panel: PanelMode) =>
-    patch({ panel, picker: panel === "full" ? get().picker : null, exportMenuOpen: false });
+    patch({
+      panel,
+      picker: panel === "full" ? get().picker : null,
+      randomizeOpen: panel === "full" && get().randomizeOpen,
+      exportMenuOpen: false,
+    });
 
   const announce = (text: string) => patch({ live: { id: ++liveId, text } });
 

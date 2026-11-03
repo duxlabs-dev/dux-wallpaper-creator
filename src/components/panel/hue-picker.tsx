@@ -51,7 +51,6 @@ export function HuePicker({ track, placeholder }: HuePickerProps) {
           spellCheck={false}
           autoComplete="off"
           aria-label="Hex color"
-          title="Type a hex color to use its hue"
           value={hex}
           onChange={(event) => {
             setHex(event.target.value);

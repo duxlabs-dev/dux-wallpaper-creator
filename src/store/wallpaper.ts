@@ -16,9 +16,9 @@ import { clampOpacity, clampScale, defaultPrefs, type Prefs } from "@/lib/prefs"
 import { createBlob, isBlob, randomShapeIndex, shapeIndex } from "@/lib/shapes";
 import { randomizeLayers, randomPlacement, type RandomizeOptions } from "@/lib/randomize";
 import { snapPosition } from "@/lib/snap";
-import { loadSaved, persist } from "@/lib/storage";
+import { loadSaved, persist, resetRandomizeOptions } from "@/lib/storage";
 import type { SchemeVariant, SpecVersion } from "@/lib/theme";
-import { normDeg, pickRandom, rnd } from "@/lib/utils";
+import { normDeg } from "@/lib/utils";
 
 export type LayerDirection = number;
 
@@ -309,8 +309,15 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
       commit({ layers: layers.filter((layer) => layer.id !== activeId), activeId: null });
     },
 
-    clearAll: () =>
-      commit({ layers: [], activeId: null, prefs: { ...get().prefs, pattern: "none" } }),
+    clearAll: () => {
+      commit({
+        layers: [],
+        activeId: null,
+        ...withCanvas({ ...defaultPrefs(), pattern: "none" }),
+        dark: true,
+      });
+      resetRandomizeOptions();
+    },
 
     setDark: (dark: boolean) => patch({ dark }),
 

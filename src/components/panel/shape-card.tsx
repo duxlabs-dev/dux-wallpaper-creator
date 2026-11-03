@@ -1,3 +1,4 @@
+import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { cn } from "@/lib/utils";
 
 interface ShapeCardProps {
@@ -10,11 +11,10 @@ interface ShapeCardProps {
 }
 
 export function ShapeCard({ d, name, current, tabIndex, onFocus, onPick }: ShapeCardProps) {
-  return (
+  const button = (
     <button
       type="button"
       aria-label={name}
-      title={name}
       tabIndex={tabIndex}
       onFocus={onFocus}
       onClick={(event) => onPick(event.shiftKey)}
@@ -34,4 +34,6 @@ export function ShapeCard({ d, name, current, tabIndex, onFocus, onPick }: Shape
       </svg>
     </button>
   );
+
+  return <DelayedTooltip content={name}>{button}</DelayedTooltip>;
 }

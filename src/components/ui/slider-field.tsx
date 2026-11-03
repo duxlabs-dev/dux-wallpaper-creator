@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { FieldLabel } from "@/components/ui/field-label";
 import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 
 interface SliderFieldProps {
   id: string;
@@ -12,8 +13,10 @@ interface SliderFieldProps {
   step: number;
   display?: ReactNode;
   description?: ReactNode;
+  tooltip?: string;
   title?: string;
   ticks?: boolean;
+  className?: string;
   onChange: (value: number) => void;
   onReset?: () => void;
 }
@@ -28,14 +31,16 @@ export function SliderField({
   step,
   display,
   description,
+  tooltip,
   title,
   ticks,
+  className,
   onChange,
   onReset,
 }: SliderFieldProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <FieldLabel icon={icon} htmlFor={id} value={display} title={title}>
+    <div className={cn("flex flex-col gap-2", className)}>
+      <FieldLabel icon={icon} htmlFor={id} value={display} title={title} tooltip={tooltip ?? title}>
         {label}
       </FieldLabel>
       <Slider

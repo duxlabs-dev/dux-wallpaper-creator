@@ -8,17 +8,27 @@ import { Switch as OptionSwitch } from "@/components/ui/switch";
 import { BLOB_MAX_EDGES, BLOB_MIN_EDGES, SMOOTHNESS } from "@/lib/shapes";
 import { PATTERN_OPACITY, PATTERN_SCALE } from "@/lib/patterns";
 import type { RandomizeOptions } from "@/lib/randomize";
-import { loadRandomizeOptions, persistRandomizeOptions } from "@/lib/storage";
+import {
+  loadRandomizeOptions,
+  persistRandomizeOptions,
+  subscribeToRandomizeOptionsReset,
+} from "@/lib/storage";
+import { DEFAULT_RANDOMIZE_OPTIONS } from "@/lib/randomize";
 import { ui, useUi } from "@/store/ui";
 import { wallpaper, useWallpaper } from "@/store/wallpaper";
 import {
   Casino,
+  Distance,
+  FilterAlt,
   KeyboardArrowDown,
   Layers,
+  Numbers,
   OpenInFull,
   Palette,
   RotateRight,
   Shuffle,
+  SwapHoriz,
+  SwapVert,
   Tune,
 } from "material-symbols/rounded";
 
@@ -47,6 +57,29 @@ const SWITCH_KEYS = [
   "canvasSpill",
 ] as const satisfies readonly (keyof RandomizeOptions)[];
 
+const SELECT_ALL_RANDOMIZE_KEYS = [
+  "positionX",
+  "positionY",
+  "shapeCount",
+  "shapeType",
+  "shapeIndex",
+  "blobContour",
+  "blobEdges",
+  "blobSmoothness",
+  "size",
+  "rotation",
+  "opacity",
+  "fill",
+  "overlapColor",
+  "hue",
+  "pattern",
+  "patternOpacity",
+  "patternScale",
+  "layerOrder",
+  "allowOverlap",
+  "canvasSpill",
+] as const satisfies readonly (keyof RandomizeOptions)[];
+
 export function RandomizeButton({ mini }: { mini: boolean }) {
   const open = useUi((state) => state.randomizeOpen);
   const button = useRef<HTMLButtonElement>(null);
@@ -59,6 +92,7 @@ export function RandomizeButton({ mini }: { mini: boolean }) {
     <IconButton
       ref={button}
       label="Randomize"
+      title="Open randomize options"
       aria-controls="panel-randomize"
       aria-expanded={open}
       variant="tonal"
@@ -77,8 +111,8 @@ export function RandomizeSettings() {
   const [options, setOptions] = useState(loadRandomizeOptions);
   const backButton = useRef<HTMLButtonElement>(null);
   const open = useUi((state) => state.randomizeOpen);
-  const enabledCount = SWITCH_KEYS.filter((key) => options[key]).length;
-  const allEnabled = enabledCount === SWITCH_KEYS.length;
+  const enabledCount = SELECT_ALL_RANDOMIZE_KEYS.filter((key) => options[key]).length;
+  const allEnabled = enabledCount === SELECT_ALL_RANDOMIZE_KEYS.length;
   const someEnabled = enabledCount > 0 && !allEnabled;
 
   useEffect(() => {
@@ -87,14 +121,22 @@ export function RandomizeSettings() {
 
   useEffect(() => persistRandomizeOptions(options), [options]);
 
+  useEffect(
+    () => subscribeToRandomizeOptionsReset(() => setOptions({ ...DEFAULT_RANDOMIZE_OPTIONS })),
+    [],
+  );
+
   const setOption = <K extends keyof RandomizeOptions>(key: K, value: RandomizeOptions[K]) =>
     setOptions((current) => ({ ...current, [key]: value }));
 
   const setAllSwitches = (value: boolean) =>
     setOptions((current) => {
       const next = { ...current };
-      for (const key of SWITCH_KEYS) next[key] = value;
-      if (!value) {
+      if (value) {
+        for (const key of SWITCH_KEYS) next[key] = false;
+        for (const key of SELECT_ALL_RANDOMIZE_KEYS) next[key] = true;
+      } else {
+        for (const key of SWITCH_KEYS) next[key] = false;
         next.sizeMin = Math.min(next.sizeMin, 100);
         next.sizeMax = Math.min(next.sizeMax, 100);
       }
@@ -128,36 +170,46 @@ export function RandomizeSettings() {
       <div className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-3 py-3">
         <div className="flex flex-col gap-3">
           <OptionGroup title="Placement" icon={<Layers />} open>
-            <OptionSwitch
-              id="randomize-shape-count"
-              label="Shape count"
-              checked={options.shapeCount}
-              onChange={(value) => setOption("shapeCount", value)}
-            />
-            {options.shapeCount && (
-              <RangeFields
-                prefix="shape-count"
+            <div className="flex flex-col gap-2">
+              <OptionSwitch
+                id="randomize-shape-count"
                 label="Shape count"
-                minValue={options.countMin}
-                maxValue={options.countMax}
-                min={0}
-                max={40}
-                step={1}
-                display=""
-                setMin={(value) => setOption("countMin", value)}
-                setMax={(value) => setOption("countMax", value)}
+                checked={options.shapeCount}
+                icon={<Numbers />}
+                className="px-1.5"
+                onChange={(value) => setOption("shapeCount", value)}
               />
-            )}
+              {options.shapeCount && (
+                <RangeFields
+                  prefix="shape-count"
+                  label="Shape count"
+                  minValue={options.countMin}
+                  maxValue={options.countMax}
+                  min={0}
+                  max={40}
+                  step={1}
+                  display=""
+                  setMin={(value) => setOption("countMin", value)}
+                  setMax={(value) => setOption("countMax", value)}
+                />
+              )}
+            </div>
             <OptionSwitch
               id="randomize-position-x"
               label="Horizontal position"
               checked={options.positionX}
+              icon={<SwapHoriz />}
+              className="px-1.5"
+              tooltip="Randomizes each layer’s horizontal offset within the canvas."
               onChange={(value) => setOption("positionX", value)}
             />
             <OptionSwitch
               id="randomize-position-y"
               label="Vertical position"
               checked={options.positionY}
+              icon={<SwapVert />}
+              className="px-1.5"
+              tooltip="Randomizes each layer’s vertical offset within the canvas."
               onChange={(value) => setOption("positionY", value)}
             />
             <SliderField
@@ -169,141 +221,172 @@ export function RandomizeSettings() {
               max={100}
               step={5}
               display={`${options.spreadStrength}%`}
+              tooltip="Controls how dispersed the shapes spread across the canvas."
+              className="px-1"
               onChange={(value) => setOption("spreadStrength", value)}
             />
-            <OptionSwitch
-              id="randomize-min-gap"
-              label="Keep a minimum gap"
-              checked={options.minimumGap}
-              onChange={(value) => setOption("minimumGap", value)}
-            />
-            {options.minimumGap && (
-              <SliderField
-                id="randomize-gap"
+            <div className="flex flex-col gap-2">
+              <OptionSwitch
+                id="randomize-min-gap"
+                label="Keep a minimum gap"
+                checked={options.minimumGap}
+                icon={<Distance />}
+                className="px-1.5"
+                tooltip="Keeps shapes separated by a minimum distance to avoid overlap and crowding."
+                onChange={(value) => setOption("minimumGap", value)}
+              />
+              {options.minimumGap && (
+                <SliderField
+                  id="randomize-gap"
+                  icon={<Distance />}
+                  label="Minimum gap"
+                  value={options.gap}
+                  min={0}
+                  max={400}
+                  step={8}
+                  display={`${options.gap} px`}
+                  onChange={(value) => setOption("gap", value)}
+                />
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <OptionSwitch
+                id="randomize-overlap"
+                label="Allow overlap"
+                checked={options.allowOverlap}
                 icon={<Layers />}
-                label="Minimum gap"
-                value={options.gap}
-                min={0}
-                max={400}
-                step={8}
-                display={`${options.gap} px`}
-                onChange={(value) => setOption("gap", value)}
+                className="px-1.5"
+                tooltip="Allows shapes to overlap instead of staying separate."
+                onChange={(value) => setOption("allowOverlap", value)}
               />
-            )}
-            <OptionSwitch
-              id="randomize-overlap"
-              label="Allow overlap"
-              checked={options.allowOverlap}
-              onChange={(value) => setOption("allowOverlap", value)}
-            />
-            {options.allowOverlap && (
-              <>
+              {options.allowOverlap && (
+                <>
+                  <SliderField
+                    id="randomize-overlap-min"
+                    icon={<Layers />}
+                    label="Minimum overlap depth"
+                    value={options.overlapMin}
+                    min={0}
+                    max={100}
+                    step={1}
+                    display={`${options.overlapMin}%`}
+                    tooltip="Only applies to shapes that overlap; it does not force overlap."
+                    onChange={(value) => setOption("overlapMin", Math.min(value, options.overlapMax))}
+                  />
+                  <SliderField
+                    id="randomize-overlap-max"
+                    icon={<Layers />}
+                    label="Maximum overlap"
+                    value={options.overlapMax}
+                    min={0}
+                    max={100}
+                    step={1}
+                    display={`${options.overlapMax}%`}
+                    tooltip="Caps how much one shape can overlap another."
+                    onChange={(value) => setOption("overlapMax", Math.max(value, options.overlapMin))}
+                  />
+                </>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <OptionSwitch
+                id="randomize-overlap-count"
+                label="Limit overlapping neighbors"
+                checked={options.limitOverlapCount}
+                icon={<FilterAlt />}
+                className="px-1.5"
+                tooltip="Caps how many neighboring shapes can overlap each layer."
+                onChange={(value) => setOption("limitOverlapCount", value)}
+              />
+              {options.limitOverlapCount && (
+                <>
+                  <RangeFields
+                    prefix="overlap-count"
+                    label="Overlapping neighbors"
+                    minValue={options.minOverlapCount}
+                    maxValue={options.maxOverlapCount}
+                    min={0}
+                    max={40}
+                    step={1}
+                    display=""
+                    setMin={(value) => setOption("minOverlapCount", value)}
+                    setMax={(value) => setOption("maxOverlapCount", value)}
+                  />
+                  {!options.allowOverlap && options.minOverlapCount > 0 && (
+                    <p role="status" className="m-0 text-xs text-on-surface-variant">
+                      Minimum neighbors requires overlap; no-overlap takes priority.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <OptionSwitch
+                id="randomize-spill"
+                label="Allow shapes beyond canvas"
+                checked={options.canvasSpill}
+                icon={<OpenInFull />}
+                className="px-1.5"
+                tooltip="Lets shapes extend outside the canvas instead of staying fully within bounds."
+                onChange={(value) =>
+                  setOptions((current) => ({
+                    ...current,
+                    canvasSpill: value,
+                    ...(!value
+                      ? {
+                          sizeMin: Math.min(current.sizeMin, 100),
+                          sizeMax: Math.min(current.sizeMax, 100),
+                        }
+                      : {}),
+                  }))
+                }
+              />
+              {options.canvasSpill && (
                 <SliderField
-                  id="randomize-overlap-min"
-                  icon={<Layers />}
-                  label="Minimum overlap depth (when overlapping)"
-                  value={options.overlapMin}
+                  id="randomize-bleed"
+                  icon={<OpenInFull />}
+                  label="Canvas spill"
+                  value={options.bleed}
                   min={0}
                   max={100}
-                  step={1}
-                  display={`${options.overlapMin}%`}
-                  description="Only applies to shapes that overlap; it does not force overlap."
-                  onChange={(value) => setOption("overlapMin", Math.min(value, options.overlapMax))}
+                  step={5}
+                  display={`${options.bleed}%`}
+                  onChange={(value) => setOption("bleed", value)}
                 />
-                <SliderField
-                  id="randomize-overlap-max"
-                  icon={<Layers />}
-                  label="Maximum overlap (% of smaller shape)"
-                  value={options.overlapMax}
-                  min={0}
-                  max={100}
-                  step={1}
-                  display={`${options.overlapMax}%`}
-                  onChange={(value) => setOption("overlapMax", Math.max(value, options.overlapMin))}
-                />
-              </>
-            )}
-            <OptionSwitch
-              id="randomize-overlap-count"
-              label="Limit overlapping neighbors"
-              checked={options.limitOverlapCount}
-              onChange={(value) => setOption("limitOverlapCount", value)}
-            />
-            {options.limitOverlapCount && (
-              <>
-                <RangeFields
-                  prefix="overlap-count"
-                  label="Overlapping neighbors"
-                  minValue={options.minOverlapCount}
-                  maxValue={options.maxOverlapCount}
-                  min={0}
-                  max={40}
-                  step={1}
-                  display=""
-                  setMin={(value) => setOption("minOverlapCount", value)}
-                  setMax={(value) => setOption("maxOverlapCount", value)}
-                />
-                {!options.allowOverlap && options.minOverlapCount > 0 && (
-                  <p role="status" className="m-0 text-xs text-on-surface-variant">
-                    Minimum neighbors requires overlap; no-overlap takes priority.
-                  </p>
-                )}
-              </>
-            )}
-            <OptionSwitch
-              id="randomize-spill"
-              label="Allow shapes beyond canvas"
-              checked={options.canvasSpill}
-              onChange={(value) =>
-                setOptions((current) => ({
-                  ...current,
-                  canvasSpill: value,
-                  ...(!value
-                    ? {
-                        sizeMin: Math.min(current.sizeMin, 100),
-                        sizeMax: Math.min(current.sizeMax, 100),
-                      }
-                    : {}),
-                }))
-              }
-            />
-            {options.canvasSpill && (
-              <SliderField
-                id="randomize-bleed"
-                icon={<Tune />}
-                label="Canvas spill"
-                value={options.bleed}
-                min={0}
-                max={100}
-                step={5}
-                display={`${options.bleed}%`}
-                onChange={(value) => setOption("bleed", value)}
-              />
-            )}
+              )}
+            </div>
           </OptionGroup>
           <OptionGroup title="Shapes" icon={<OpenInFull />} open>
             <OptionSwitch
               id="randomize-shape-type"
               label="Shape or blob type"
               checked={options.shapeType}
+              className="px-1.5"
+              tooltip="Switches some layers between regular shapes and blob forms."
               onChange={(value) => setOption("shapeType", value)}
             />
             <OptionSwitch
               id="randomize-shape-index"
               label="Randomize shape"
               checked={options.shapeIndex}
+              className="px-1.5"
+              tooltip="Chooses a different shape variant for each layer."
               onChange={(value) => setOption("shapeIndex", value)}
             />
             <OptionSwitch
               id="randomize-blob-contour"
               label="Randomize blob shape"
               checked={options.blobContour}
+              className="px-1.5"
+              tooltip="Randomizes the blob silhouette instead of keeping the same contour."
               onChange={(value) => setOption("blobContour", value)}
             />
             <OptionSwitch
               id="randomize-blob-edges"
               label="Blob edge count"
               checked={options.blobEdges}
+              className="px-1.5"
+              tooltip="Changes how many edges the blob uses."
               onChange={(value) => setOption("blobEdges", value)}
             />
             {options.blobEdges && (
@@ -324,6 +407,8 @@ export function RandomizeSettings() {
               id="randomize-blob-smoothness"
               label="Blob smoothness"
               checked={options.blobSmoothness}
+              className="px-1.5"
+              tooltip="Adjusts how round or faceted the blob edges appear."
               onChange={(value) => setOption("blobSmoothness", value)}
             />
             {options.blobSmoothness && (
@@ -345,6 +430,8 @@ export function RandomizeSettings() {
               id="randomize-size"
               label="Shape size"
               checked={options.size}
+              className="px-1.5"
+              tooltip="Randomizes the size range for each layer."
               onChange={(value) => setOption("size", value)}
             />
             {options.size && (
@@ -365,6 +452,8 @@ export function RandomizeSettings() {
               id="randomize-rotation"
               label="Rotation"
               checked={options.rotation}
+              className="px-1.5"
+              tooltip="Randomizes each layer’s rotation angle."
               onChange={(value) => setOption("rotation", value)}
             />
             {options.rotation && (
@@ -377,6 +466,7 @@ export function RandomizeSettings() {
                 max={180}
                 step={15}
                 display={`±${options.rotationRange}°`}
+                className="px-0"
                 onChange={(value) => setOption("rotationRange", value)}
               />
             )}
@@ -384,6 +474,8 @@ export function RandomizeSettings() {
               id="randomize-opacity"
               label="Shape opacity"
               checked={options.opacity}
+              className="px-1.5"
+              tooltip="Randomizes each layer’s transparency."
               onChange={(value) => setOption("opacity", value)}
             />
             {options.opacity && (
@@ -406,6 +498,8 @@ export function RandomizeSettings() {
               id="randomize-hue"
               label="Hue"
               checked={options.hue}
+              className="px-1.5"
+              tooltip="Shifts each layer’s hue within a range."
               onChange={(value) => setOption("hue", value)}
             />
             {options.hue && (
@@ -418,6 +512,7 @@ export function RandomizeSettings() {
                 max={180}
                 step={5}
                 display={`±${options.hueRange}°`}
+                className="px-0"
                 onChange={(value) => setOption("hueRange", value)}
               />
             )}
@@ -425,12 +520,16 @@ export function RandomizeSettings() {
               id="randomize-fill"
               label="Fill color"
               checked={options.fill}
+              className="px-1.5"
+              tooltip="Randomizes which fill color each shape uses."
               onChange={(value) => setOption("fill", value)}
             />
             <OptionSwitch
               id="randomize-overlap-color"
               label="Overlap color"
               checked={options.overlapColor}
+              className="px-1.5"
+              tooltip="Randomizes the color used where layers overlap."
               onChange={(value) => setOption("overlapColor", value)}
             />
           </OptionGroup>
@@ -439,12 +538,16 @@ export function RandomizeSettings() {
               id="randomize-pattern"
               label="Pattern selection"
               checked={options.pattern}
+              className="px-1.5"
+              tooltip="Chooses a different background pattern at random."
               onChange={(value) => setOption("pattern", value)}
             />
             <OptionSwitch
               id="randomize-pattern-opacity"
               label="Pattern opacity"
               checked={options.patternOpacity}
+              className="px-1.5"
+              tooltip="Randomizes how visible the background pattern is."
               onChange={(value) => setOption("patternOpacity", value)}
             />
             {options.patternOpacity && (
@@ -458,7 +561,6 @@ export function RandomizeSettings() {
                 step={0.02}
                 display="%"
                 displayFactor={100}
-                displayFactor={100}
                 setMin={(value) => setOption("patternOpacityMin", value)}
                 setMax={(value) => setOption("patternOpacityMax", value)}
               />
@@ -467,6 +569,8 @@ export function RandomizeSettings() {
               id="randomize-pattern-scale"
               label="Pattern scale"
               checked={options.patternScale}
+              className="px-1.5"
+              tooltip="Randomizes the size of the background pattern tiles."
               onChange={(value) => setOption("patternScale", value)}
             />
             {options.patternScale && (
@@ -489,6 +593,8 @@ export function RandomizeSettings() {
               id="randomize-layer-order"
               label="Shuffle stacking order"
               checked={options.layerOrder}
+              className="px-1.5"
+              tooltip="Randomizes which layers appear on top of others."
               onChange={(value) => setOption("layerOrder", value)}
             />
           </OptionGroup>
@@ -527,13 +633,13 @@ function OptionGroup({
       onToggle={(event) => setExpanded(event.currentTarget.open)}
       className="group"
     >
-      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-2xl px-1 text-[15px] focus-ring hover:state-layer-8 active:state-layer-12 [&::-webkit-details-marker]:hidden">
+      <summary className="hover:state-layer-4 flex min-h-14 cursor-pointer list-none items-center gap-3 rounded-xl px-1 text-[15px] focus-ring active:state-layer-8 [&::-webkit-details-marker]:hidden">
         <span className="flex-1 font-semibold">{title}</span>
         <span className="flex size-6 shrink-0 items-center justify-center text-on-surface-variant [&>svg]:size-5">
           {icon}
         </span>
         <KeyboardArrowDown
-          className={`size-5 shrink-0 text-on-surface-variant transition-transform duration-300 ease-effect ${expanded ? "rotate-180" : "rotate-0"}`}
+          className={`ease-effect size-5 shrink-0 text-on-surface-variant transition-transform duration-300 ${expanded ? "rotate-180" : "rotate-0"}`}
         />
       </summary>
       <div className="flex flex-col gap-2 pb-2 pl-1">{children}</div>

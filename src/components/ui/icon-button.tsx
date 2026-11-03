@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { useRipple } from "@/hooks/ui/use-ripple";
 import { cn } from "@/lib/utils";
 import { type ButtonVariant, buttonVariants } from "./button";
@@ -16,14 +17,14 @@ export function IconButton({
   className,
   onClick,
   ref,
+  title,
   ...rest
 }: IconButtonProps) {
   const ripple = useRipple({ ref });
-  return (
+  const button = (
     <button
       type="button"
       ref={ripple}
-      title={rest.title ?? label}
       aria-label={label}
       onClick={(event) => {
         event.currentTarget.blur();
@@ -38,4 +39,6 @@ export function IconButton({
       {...rest}
     />
   );
+
+  return title ? <DelayedTooltip content={title}>{button}</DelayedTooltip> : button;
 }
