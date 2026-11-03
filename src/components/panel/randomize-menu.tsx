@@ -17,19 +17,30 @@ import { DEFAULT_RANDOMIZE_OPTIONS } from "@/lib/randomize";
 import { ui, useUi } from "@/store/ui";
 import { wallpaper, useWallpaper } from "@/store/wallpaper";
 import {
+  ArrowRange,
   Casino,
   Distance,
   FilterAlt,
+  FormatColorFill,
+  Gesture,
   KeyboardArrowDown,
   Layers,
+  LineCurve,
   Numbers,
+  Opacity,
   OpenInFull,
   Palette,
+  Pattern,
   RotateRight,
+  ScatterPlot,
+  Shapes,
+  Speed,
+  SpeedTwo,
   Shuffle,
   SwapHoriz,
   SwapVert,
   Tune,
+  ZoomOutMap,
 } from "material-symbols/rounded";
 
 const SWITCH_KEYS = [
@@ -213,7 +224,7 @@ export function RandomizeSettings() {
             />
             <SliderField
               id="randomize-spread-strength"
-              icon={<Shuffle />}
+              icon={<ScatterPlot />}
               label="Spread strength"
               value={options.spreadStrength}
               min={0}
@@ -270,7 +281,9 @@ export function RandomizeSettings() {
                       step={1}
                       display={`${options.overlapMin}%`}
                       tooltip="Only applies to shapes that overlap; it does not force overlap."
-                      onChange={(value) => setOption("overlapMin", Math.min(value, options.overlapMax))}
+                      onChange={(value) =>
+                        setOption("overlapMin", Math.min(value, options.overlapMax))
+                      }
                     />
                     <SliderField
                       id="randomize-overlap-max"
@@ -282,7 +295,9 @@ export function RandomizeSettings() {
                       step={1}
                       display={`${options.overlapMax}%`}
                       tooltip="Caps how much one shape can overlap another."
-                      onChange={(value) => setOption("overlapMax", Math.max(value, options.overlapMin))}
+                      onChange={(value) =>
+                        setOption("overlapMax", Math.max(value, options.overlapMin))
+                      }
                     />
                   </>
                 </NestedControls>
@@ -358,11 +373,12 @@ export function RandomizeSettings() {
               )}
             </div>
           </OptionGroup>
-          <OptionGroup title="Shapes" icon={<OpenInFull />} open>
+          <OptionGroup title="Shapes" icon={<Shapes />} open>
             <OptionSwitch
               id="randomize-shape-type"
               label="Shape or blob type"
               checked={options.shapeType}
+              icon={<Shapes />}
               tooltip="Switches some layers between regular shapes and blob forms."
               onChange={(value) => setOption("shapeType", value)}
             />
@@ -370,6 +386,7 @@ export function RandomizeSettings() {
               id="randomize-shape-index"
               label="Randomize shape"
               checked={options.shapeIndex}
+              icon={<Shapes />}
               tooltip="Chooses a different shape variant for each layer."
               onChange={(value) => setOption("shapeIndex", value)}
             />
@@ -377,6 +394,7 @@ export function RandomizeSettings() {
               id="randomize-blob-contour"
               label="Randomize blob shape"
               checked={options.blobContour}
+              icon={<Gesture />}
               tooltip="Randomizes the blob silhouette instead of keeping the same contour."
               onChange={(value) => setOption("blobContour", value)}
             />
@@ -384,6 +402,7 @@ export function RandomizeSettings() {
               id="randomize-blob-edges"
               label="Blob edge count"
               checked={options.blobEdges}
+              icon={<Numbers />}
               tooltip="Changes how many edges the blob uses."
               onChange={(value) => setOption("blobEdges", value)}
             />
@@ -407,6 +426,7 @@ export function RandomizeSettings() {
               id="randomize-blob-smoothness"
               label="Blob smoothness"
               checked={options.blobSmoothness}
+              icon={<LineCurve />}
               tooltip="Adjusts how round or faceted the blob edges appear."
               onChange={(value) => setOption("blobSmoothness", value)}
             />
@@ -431,6 +451,7 @@ export function RandomizeSettings() {
               id="randomize-size"
               label="Shape size"
               checked={options.size}
+              icon={<ZoomOutMap />}
               tooltip="Randomizes the size range for each layer."
               onChange={(value) => setOption("size", value)}
             />
@@ -454,6 +475,7 @@ export function RandomizeSettings() {
               id="randomize-rotation"
               label="Rotation"
               checked={options.rotation}
+              icon={<RotateRight />}
               tooltip="Randomizes each layer’s rotation angle."
               onChange={(value) => setOption("rotation", value)}
             />
@@ -461,7 +483,7 @@ export function RandomizeSettings() {
               <NestedControls>
                 <SliderField
                   id="randomize-rotation-range"
-                  icon={<RotateRight />}
+                  icon={<ArrowRange />}
                   label="Rotation range"
                   value={options.rotationRange}
                   min={0}
@@ -476,6 +498,7 @@ export function RandomizeSettings() {
               id="randomize-opacity"
               label="Shape opacity"
               checked={options.opacity}
+              icon={<Opacity />}
               tooltip="Randomizes each layer’s transparency."
               onChange={(value) => setOption("opacity", value)}
             />
@@ -501,6 +524,7 @@ export function RandomizeSettings() {
               id="randomize-hue"
               label="Hue"
               checked={options.hue}
+              icon={<FormatColorFill />}
               tooltip="Shifts each layer’s hue within a range."
               onChange={(value) => setOption("hue", value)}
             />
@@ -508,7 +532,7 @@ export function RandomizeSettings() {
               <NestedControls>
                 <SliderField
                   id="randomize-hue-range"
-                  icon={<Tune />}
+                  icon={<ArrowRange />}
                   label="Hue variation"
                   value={options.hueRange}
                   min={0}
@@ -523,6 +547,7 @@ export function RandomizeSettings() {
               id="randomize-fill"
               label="Fill color"
               checked={options.fill}
+              icon={<FormatColorFill />}
               tooltip="Randomizes which fill color each shape uses."
               onChange={(value) => setOption("fill", value)}
             />
@@ -530,6 +555,7 @@ export function RandomizeSettings() {
               id="randomize-overlap-color"
               label="Overlap color"
               checked={options.overlapColor}
+              icon={<Palette />}
               tooltip="Randomizes the color used where layers overlap."
               onChange={(value) => setOption("overlapColor", value)}
             />
@@ -539,6 +565,7 @@ export function RandomizeSettings() {
               id="randomize-pattern"
               label="Pattern selection"
               checked={options.pattern}
+              icon={<Pattern />}
               tooltip="Chooses a different background pattern at random."
               onChange={(value) => setOption("pattern", value)}
             />
@@ -546,6 +573,7 @@ export function RandomizeSettings() {
               id="randomize-pattern-opacity"
               label="Pattern opacity"
               checked={options.patternOpacity}
+              icon={<Opacity />}
               tooltip="Randomizes how visible the background pattern is."
               onChange={(value) => setOption("patternOpacity", value)}
             />
@@ -570,6 +598,7 @@ export function RandomizeSettings() {
               id="randomize-pattern-scale"
               label="Pattern scale"
               checked={options.patternScale}
+              icon={<ZoomOutMap />}
               tooltip="Randomizes the size of the background pattern tiles."
               onChange={(value) => setOption("patternScale", value)}
             />
@@ -595,6 +624,7 @@ export function RandomizeSettings() {
               id="randomize-layer-order"
               label="Shuffle stacking order"
               checked={options.layerOrder}
+              icon={<Layers />}
               tooltip="Randomizes which layers appear on top of others."
               onChange={(value) => setOption("layerOrder", value)}
             />
@@ -685,7 +715,7 @@ function RangeFields({
     <>
       <SliderField
         id={`${prefix}-min`}
-        icon={<Tune />}
+        icon={<SpeedTwo />}
         label={`Minimum ${label.toLowerCase()}`}
         value={minValue}
         min={min}
@@ -696,7 +726,7 @@ function RangeFields({
       />
       <SliderField
         id={`${prefix}-max`}
-        icon={<Tune />}
+        icon={<Speed />}
         label={`Maximum ${label.toLowerCase()}`}
         value={maxValue}
         min={min}
