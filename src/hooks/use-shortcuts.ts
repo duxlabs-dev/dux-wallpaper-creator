@@ -9,6 +9,7 @@ import { canvasEl, sidebarEl } from "@/lib/focus-dom";
 import { focusCanvas, focusSidebar, selectAndAnnounce } from "@/a11y/focus-zones";
 import { PALETTE } from "@/lib/palette";
 import { patternLabel } from "@/lib/patterns";
+import { randomizeWithOptions } from "@/lib/randomize-action";
 import { clamp, normDeg, round } from "@/lib/utils";
 import { say, sayActive, sayLayerPosition } from "@/a11y/announce";
 import { armable } from "@/hooks/shortcuts/arm";
@@ -203,7 +204,7 @@ export const useShortcuts = () => {
         enabled: !overlay,
         ignoreInputs: true,
       }),
-      bind("Alt+R", () => ui.setRandomizeOpen(true), { enabled: live }),
+      bind("Alt+R", () => randomizeWithOptions(), { enabled: live }),
       bind("Escape", () => ui.setRandomizeOpen(false), { enabled: randomizeOpen }),
       bind("?", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
       bind("F1", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),

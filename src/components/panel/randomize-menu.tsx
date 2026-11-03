@@ -14,8 +14,10 @@ import {
   subscribeToRandomizeOptionsReset,
 } from "@/lib/storage";
 import { DEFAULT_RANDOMIZE_OPTIONS } from "@/lib/randomize";
-import { ui, useUi } from "@/store/ui";
-import { wallpaper, useWallpaper } from "@/store/wallpaper";
+import { randomizeWithOptions } from "@/lib/randomize-action";
+import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
+import { ui, uiStore, useUi } from "@/store/ui";
+import { useWallpaper } from "@/store/wallpaper";
 import {
   ArrowRange,
   Casino,
@@ -94,22 +96,46 @@ const SELECT_ALL_RANDOMIZE_KEYS = [
 export function RandomizeButton({ mini }: { mini: boolean }) {
   const open = useUi((state) => state.randomizeOpen);
   const button = useRef<HTMLButtonElement>(null);
+  const holdTimer = useRef<number | null>(null);
   const wasOpen = useRef(open);
+  const clearHoldTimer = () => {
+    if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+  };
   useEffect(() => {
     if (wasOpen.current && !open) button.current?.focus({ preventScroll: true });
     wasOpen.current = open;
   }, [open]);
+  useEffect(
+    () => () => {
+      if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
+    },
+    [],
+  );
   return (
     <IconButton
       ref={button}
       label="Randomize"
-      title="Open randomize options"
+      title="Click to randomize (Alt+R); hold 250 ms for options"
       aria-controls="panel-randomize"
       aria-expanded={open}
+      aria-keyshortcuts={ariaKeyshortcuts("Alt+R")}
       variant="tonal"
       className={mini ? "size-12 rounded-[14px]" : "size-12 rounded-3xl"}
+      onPointerDown={(event) => {
+        if (event.button !== 0 || !event.isPrimary) return;
+        clearHoldTimer();
+        holdTimer.current = window.setTimeout(() => {
+          holdTimer.current = null;
+          ui.setRandomizeOpen(true);
+        }, 250);
+      }}
+      onPointerUp={clearHoldTimer}
+      onPointerCancel={clearHoldTimer}
+      onPointerLeave={clearHoldTimer}
       onClick={() => {
-        ui.setRandomizeOpen(true);
+        if (uiStore.state.randomizeOpen) return;
+        randomizeWithOptions();
       }}
     >
       <Casino />
@@ -155,8 +181,7 @@ export function RandomizeSettings() {
     });
 
   const randomize = () => {
-    const satisfied = wallpaper.randomizeLayers(options);
-    if (!satisfied) ui.showToast("Some shapes could not meet the requested placement rules");
+    randomizeWithOptions(options);
   };
 
   return (

@@ -90,7 +90,7 @@ const groups = ({ move, rotate }: Labels): { title: string; rows: Row[] }[] => [
       { label: "Undo", keys: keyParts("Mod+Z") },
       { label: "Redo", hint: `or ${keyLabel("Mod+Y")}`, keys: keyParts("Mod+Shift+Z") },
       { label: "Export menu", keys: keyParts("Mod+S") },
-      { label: "Randomizer menu", keys: keyParts("Alt+R") },
+      { label: "Randomize", keys: keyParts("Alt+R") },
       { label: "Cycle the panel", hint: "full → mini → hidden", keys: ["P"] },
       { label: "Clear everything", hint: "press again to confirm", keys: ["X"] },
       { label: "Show this cheat sheet", hint: "or F1", keys: ["?"] },
