@@ -22,6 +22,21 @@ export const isOverlapColor = (value: unknown): value is OverlapColor =>
 
 export const cssColor = (name: PaletteColor) => `var(--md-sys-color-${name})`;
 
+// Content color for icons on a palette color. inverse-primary has no on-role
+// of its own; inverse-surface is the opposite tone in both themes.
+const ON_COLORS: Record<PaletteColor, string> = {
+  primary: "var(--md-sys-color-on-primary)",
+  secondary: "var(--md-sys-color-on-secondary)",
+  tertiary: "var(--md-sys-color-on-tertiary)",
+  "primary-container": "var(--md-sys-color-on-primary-container)",
+  "secondary-container": "var(--md-sys-color-on-secondary-container)",
+  "tertiary-container": "var(--md-sys-color-on-tertiary-container)",
+  "inverse-primary": "var(--md-sys-color-inverse-surface)",
+  black: "rgb(255 255 255)",
+};
+
+export const cssOnColor = (name: PaletteColor) => ON_COLORS[name];
+
 export const randomFill = (): PaletteColor => PALETTE[Math.floor(Math.random() * PALETTE.length)];
 
 export const randomOverlap = (fill: PaletteColor): OverlapColor => {

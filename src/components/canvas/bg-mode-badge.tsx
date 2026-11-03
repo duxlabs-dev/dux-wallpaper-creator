@@ -15,7 +15,7 @@ export function BgModeBadge() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute top-3 left-1/2 z-10 flex -translate-x-1/2 animate-fade-up items-center gap-2 rounded-full border border-primary/40 bg-surface-container-high py-1.5 pr-3 pl-4 text-sm font-semibold text-on-surface shadow-[0_2px_8px_rgba(0,0,0,.24)] select-none"
+      className="pointer-events-none absolute top-3 left-1/2 z-10 flex -translate-x-1/2 animate-fade-up items-center gap-2 rounded-full border border-primary/40 bg-surface-container-high py-1.5 pr-3 pl-4 text-sm font-medium text-on-surface shadow-level2 select-none"
     >
       <Texture />
       <span>Background mode</span>

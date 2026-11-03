@@ -7,16 +7,19 @@ export interface RippleOptions<T extends HTMLElement = HTMLElement> {
   ref?: Ref<T>;
 }
 
-const DEFAULT_DURATION = 600;
+// Compose ripple timing: grows in 225ms, fades in 150ms.
+const DEFAULT_DURATION = 225;
 
-const FAILSAFE_FACTOR = 4;
+const FADE_DURATION = 150;
+
+// Releases a ripple whose pointerup never arrived.
+const FAILSAFE_MS = 2400;
 
 const REMOVE_MARGIN = 50;
 
 const CIRCLE =
   "absolute rounded-full bg-[image:radial-gradient(closest-side,currentColor_92%,transparent)] " +
-  "opacity-10 pointer-events-none -translate-x-1/2 -translate-y-1/2 scale-0 " +
-  "transition duration-(--ripple-duration) ease-effect";
+  "opacity-10 pointer-events-none -translate-x-1/2 -translate-y-1/2 scale-0";
 
 const applyHostClasses = (host: HTMLElement) => {
   const position =
@@ -60,7 +63,7 @@ const spawnCircle = (
   circle.setAttribute("aria-hidden", "true");
   circle.style.cssText =
     `left:${offsetX}px; top:${offsetY}px; width:${reach}px; height:${reach}px; ` +
-    `--ripple-duration:${duration}ms`;
+    `transition: scale ${duration}ms cubic-bezier(0.2, 0, 0, 1), opacity ${FADE_DURATION}ms linear`;
   host.appendChild(circle);
 
   let removal: ReturnType<typeof setTimeout> | undefined;
@@ -78,9 +81,9 @@ const spawnCircle = (
     window.removeEventListener("pointercancel", release);
     clearTimeout(failSafe);
     circle.classList.replace("opacity-10", "opacity-0");
-    removal = setTimeout(stop, duration + REMOVE_MARGIN);
+    removal = setTimeout(stop, FADE_DURATION + REMOVE_MARGIN);
   };
-  const failSafe = setTimeout(() => release(), duration * FAILSAFE_FACTOR);
+  const failSafe = setTimeout(() => release(), FAILSAFE_MS);
   window.addEventListener("pointerup", release);
   window.addEventListener("pointercancel", release);
   live.add(stop);

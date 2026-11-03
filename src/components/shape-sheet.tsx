@@ -23,7 +23,7 @@ export function ShapeSheet() {
       aria-hidden={!open}
       onClick={(event) => event.target === event.currentTarget && ui.closeSheet()}
       className={cn(
-        "fixed inset-0 z-20 bg-black/60 transition-opacity duration-300 ease-[cubic-bezier(0.3,0,0,1)]",
+        "fixed inset-0 z-20 bg-black/32 transition-opacity duration-300 ease-[cubic-bezier(0.3,0,0,1)]",
         open ? "opacity-100" : "pointer-events-none opacity-0",
       )}
     >
@@ -35,7 +35,7 @@ export function ShapeSheet() {
         tabIndex={-1}
         inert={!open}
         className={cn(
-          "absolute bottom-0 left-1/2 flex max-h-[min(78vh,720px)] w-[min(880px,calc(100vw-24px))] flex-col gap-1 rounded-t-[32px] bg-surface-container px-3 pt-3 pb-3 text-sm text-on-surface transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.3,0,0,1)] outline-none",
+          "absolute bottom-0 left-1/2 flex max-h-[min(78vh,720px)] w-[min(880px,calc(100vw-24px))] flex-col gap-1 rounded-t-[28px] bg-surface-container-low px-3 pb-3 text-sm text-on-surface shadow-level1 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.3,0,0,1)] outline-none",
           open
             ? "-translate-x-1/2 opacity-100"
             : "pointer-events-none translate-x-[-50%] translate-y-full opacity-0",
@@ -43,9 +43,9 @@ export function ShapeSheet() {
       >
         <div
           aria-hidden
-          className="mb-2 h-1 w-9 shrink-0 self-center rounded-full bg-on-surface opacity-40"
+          className="mt-[22px] mb-[18px] h-1 w-8 shrink-0 self-center rounded-full bg-on-surface-variant"
         />
-        <div className="shrink-0 px-2 pb-1 text-center text-[1.05rem] font-medium">
+        <div className="shrink-0 px-2 pb-1 text-center text-[22px] leading-7">
           {replacing ? "Change shape" : "Shapes"}
         </div>
         {open && (

@@ -37,7 +37,7 @@ export function ShapePicker() {
         backRef={back}
       />
       <ShapeGrid
-        className="min-h-0 flex-1 grid-cols-4 px-1 pt-3 pb-1"
+        className="min-h-0 flex-1 grid-cols-4 px-1.5 pt-3 pb-1.5"
         currentShape={replacing ? active?.shape : undefined}
         onPick={(spec, shiftKey) => {
           pickShape(mode!, spec);

@@ -9,12 +9,12 @@ interface ButtonProps extends ComponentProps<"button"> {
 }
 
 export const buttonVariants: Record<ButtonVariant, string> = {
-  filled: "bg-primary text-on-primary hover:state-layer-8 active:state-layer-12",
+  filled: "bg-primary text-on-primary hover:state-layer-8 disabled:bg-on-surface/10",
   tonal:
-    "bg-secondary-container text-on-secondary-container hover:state-layer-8 active:state-layer-12",
-  text: "bg-transparent text-on-surface hover:state-layer-8 active:state-layer-12",
+    "bg-secondary-container text-on-secondary-container hover:state-layer-8 disabled:bg-on-surface/10",
+  text: "bg-transparent text-on-surface-variant hover:state-layer-8",
   danger:
-    "bg-[color-mix(in_srgb,var(--color-error)_22%,var(--color-surface-container))] text-[color-mix(in_srgb,var(--color-error)_55%,var(--color-on-surface))] hover:state-layer-8 active:state-layer-12",
+    "bg-error-container text-on-error-container hover:state-layer-8 disabled:bg-on-surface/10",
 };
 
 export function Button({ variant = "tonal", className, onClick, ref, ...rest }: ButtonProps) {
@@ -28,7 +28,7 @@ export function Button({ variant = "tonal", className, onClick, ref, ...rest }: 
         onClick?.(event);
       }}
       className={cn(
-        "inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-[20px] border-0 px-2.5 py-3 text-[13px] leading-none font-medium focus-ring morph active:rounded-xl [&_svg]:size-5 [&_svg]:shrink-0",
+        "inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-[20px] border-0 px-4 py-0 text-sm leading-5 font-medium focus-ring morph active:rounded-lg disabled:pointer-events-none disabled:text-on-surface/38 [&_svg]:size-5 [&_svg]:shrink-0",
         buttonVariants[variant],
         className,
       )}

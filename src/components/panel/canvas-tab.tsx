@@ -3,26 +3,17 @@ import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { wallpaper } from "@/store/wallpaper";
 import { DeleteForever } from "material-symbols/rounded";
 import { FormatPicker } from "./format-picker";
-import { HuePicker } from "./hue-picker";
 import { PatternPicker } from "./pattern-picker";
-import { ThemeToggle } from "./theme-toggle";
 
-interface GlobalTabProps {
-  hueTrack: string;
-  primaryHex: string;
-}
-
-export function GlobalTab({ hueTrack, primaryHex }: GlobalTabProps) {
+export function CanvasTab() {
   return (
     <section
-      id="panel-global"
+      id="panel-canvas"
       role="tabpanel"
-      aria-labelledby="tab-global"
+      aria-labelledby="tab-canvas"
       className="flex animate-fade-up flex-col gap-7"
     >
-      <ThemeToggle />
       <FormatPicker />
-      <HuePicker track={hueTrack} placeholder={primaryHex} />
       <PatternPicker />
       <div className="flex flex-col gap-2 border-t border-outline-variant pt-6">
         <Button

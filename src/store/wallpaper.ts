@@ -17,7 +17,8 @@ import { createBlob, isBlob, randomShapeIndex, shapeIndex } from "@/lib/shapes";
 import { randomizeLayers, randomPlacement, type RandomizeOptions } from "@/lib/randomize";
 import { snapPosition } from "@/lib/snap";
 import { loadSaved, persist } from "@/lib/storage";
-import { normDeg } from "@/lib/utils";
+import type { SchemeVariant, SpecVersion } from "@/lib/theme";
+import { normDeg, pickRandom, rnd } from "@/lib/utils";
 
 export type LayerDirection = number;
 
@@ -314,6 +315,10 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
     setDark: (dark: boolean) => patch({ dark }),
 
     setHue: (hue: number) => commit({ prefs: { ...get().prefs, hue: normDeg(hue) } }),
+
+    setScheme: (scheme: SchemeVariant) => commit({ prefs: { ...get().prefs, scheme } }),
+
+    setSpec: (spec: SpecVersion) => commit({ prefs: { ...get().prefs, spec } }),
 
     setPattern,
 

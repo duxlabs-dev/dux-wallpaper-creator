@@ -15,11 +15,11 @@ export interface TabsProps<T extends string> {
   label: string;
 }
 
-const INDICATOR_WIDTH = 32;
+const MIN_INDICATOR_WIDTH = 24;
 
 export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsProps<T>) {
   const list = useRef<HTMLDivElement>(null);
-  const [left, setLeft] = useState(0);
+  const [indicator, setIndicator] = useState({ left: 0, width: MIN_INDICATOR_WIDTH });
   const ripple = useRipple();
 
   useLayoutEffect(() => {
@@ -27,8 +27,11 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
     if (!element) return;
     const measure = () => {
       const selectedTab = element.querySelector<HTMLButtonElement>('[aria-selected="true"]');
-      if (selectedTab)
-        setLeft(selectedTab.offsetLeft + (selectedTab.offsetWidth - INDICATOR_WIDTH) / 2);
+      if (!selectedTab) return;
+      // The indicator spans the tab's content, not the whole tab.
+      const content = selectedTab.querySelector<HTMLElement>("[data-tab-content]");
+      const width = Math.max(MIN_INDICATOR_WIDTH, content?.offsetWidth ?? 0);
+      setIndicator({ left: selectedTab.offsetLeft + (selectedTab.offsetWidth - width) / 2, width });
     };
     measure();
     const resizeObserver = new ResizeObserver(measure);
@@ -62,8 +65,8 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute -bottom-px z-2 h-[3px] rounded-t-[3px] bg-primary transition-[left] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
-        style={{ left, width: INDICATOR_WIDTH }}
+        className="pointer-events-none absolute -bottom-px z-2 h-[3px] rounded-t-[3px] bg-primary transition-[left,width] duration-(--duration-default-spatial) ease-default-spatial"
+        style={indicator}
       />
       {tabs.map((tab, index) => {
         const selected = tab.id === value;
@@ -80,12 +83,14 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
             onClick={() => onChange(tab.id)}
             onKeyDown={(event) => onKeyDown(event, index)}
             className={cn(
-              "relative flex h-16 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-t-[20px] border-0 bg-transparent px-3 text-sm font-semibold whitespace-nowrap transition-colors duration-200 hover:bg-surface-container-high focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary [&_svg]:size-5",
+              "relative flex h-16 flex-1 cursor-pointer items-center justify-center border-0 bg-transparent px-4 text-sm leading-5 font-medium whitespace-nowrap focus-ring-inset transition-colors duration-(--duration-default-effects) ease-default-effects hover:state-layer-8 [&_svg]:size-6",
               selected ? "text-primary" : "text-on-surface-variant",
             )}
           >
-            {typeof tab.icon === "function" ? tab.icon(selected, value) : tab.icon}
-            {typeof tab.label === "function" ? tab.label(selected, value) : tab.label}
+            <span data-tab-content className="flex flex-col items-center gap-0.5">
+              {typeof tab.icon === "function" ? tab.icon(selected, value) : tab.icon}
+              {typeof tab.label === "function" ? tab.label(selected, value) : tab.label}
+            </span>
           </button>
         );
       })}

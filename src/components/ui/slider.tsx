@@ -19,8 +19,12 @@ interface SliderProps {
   onPointerCancel?: (event: React.PointerEvent<HTMLElement>) => void;
 }
 
+// Space between the track and the handle's edge. The handle is 4px wide and
+// narrows to 2px while pressed or focused; the track follows so the gap stays.
 const GAP = 6;
 const TICK = 4;
+// Ticks and the stop indicator sit centered in the track's rounded ends.
+const TICK_INSET = 8;
 const MIN_TICK_SPACING = 8;
 
 const ACTIVE_TRACK = "var(--color-primary)";
@@ -67,19 +71,22 @@ export function Slider({
 
   const fraction = Math.min(1, Math.max(0, (value - min) / (max - min)));
   const positionX = fraction * width;
-  const activeWidth = Math.max(0, positionX - GAP);
-  const inactiveLeft = Math.min(width, positionX + GAP);
+  const narrow = pressed || focused;
+  const trackGap = GAP + (narrow ? 1 : 2);
 
   const count = Math.round((max - min) / step);
   const showTicks =
     ticks && count > 0 && Number.isFinite(count) && width / count >= MIN_TICK_SPACING;
 
-  const tickMarks = showTicks
-    ? Array.from({ length: count + 1 }, (_, index) => {
-        const tickPositionX = clamp((index / count) * width, TICK, width - TICK);
-        return { pos: tickPositionX, active: tickPositionX < positionX };
-      }).filter((tick) => Math.abs(tick.pos - positionX) >= GAP + TICK / 2)
-    : [];
+  // Without ticks, a single stop indicator marks the end of the track.
+  const tickMarks = (
+    showTicks ? Array.from({ length: count + 1 }, (_, index) => index / count) : [1]
+  )
+    .map((tickFraction) => {
+      const tickPositionX = clamp(tickFraction * width, TICK_INSET, width - TICK_INSET);
+      return { pos: tickPositionX, active: tickPositionX < positionX };
+    })
+    .filter((tick) => Math.abs(tick.pos - positionX) >= trackGap + TICK / 2);
 
   const seek = useCallback(
     (clientX: number) => {
@@ -109,6 +116,7 @@ export function Slider({
   const vars = {
     "--active": disabled ? DISABLED_ACTIVE_TRACK : ACTIVE_TRACK,
     "--inactive": disabled ? DISABLED_INACTIVE_TRACK : INACTIVE_TRACK,
+    "--slider-gap": `${trackGap}px`,
     ...(track ? { "--track": track } : null),
   } as React.CSSProperties;
 
@@ -138,7 +146,7 @@ export function Slider({
       }}
       onDoubleClick={disabled ? undefined : onReset}
       className={cn(
-        "relative h-10 w-full shrink-0 cursor-pointer touch-pan-y select-none",
+        "relative h-7 w-full shrink-0 cursor-pointer touch-pan-y transition-[--slider-gap] duration-(--duration-fast-spatial) ease-fast-spatial select-none pointer-coarse:h-11",
         disabled && "cursor-not-allowed",
         disabled && track && "opacity-38",
         className,
@@ -186,30 +194,34 @@ export function Slider({
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute top-2.5 left-0 h-5 rounded-l-lg rounded-r-sm bg-[image:var(--track,linear-gradient(var(--active),var(--active)))] bg-[length:var(--w)_100%] bg-no-repeat"
-        style={{ width: activeWidth }}
+        className="pointer-events-none absolute top-1.5 left-0 h-4 rounded-l-lg rounded-r-[2px] bg-[image:var(--track,linear-gradient(var(--active),var(--active)))] bg-[length:var(--w)_100%] bg-no-repeat pointer-coarse:top-3.5"
+        style={{ width: `max(0px, ${positionX}px - var(--slider-gap))` }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute top-2.5 right-0 h-5 rounded-l-sm rounded-r-lg bg-[image:var(--track,linear-gradient(var(--inactive),var(--inactive)))] bg-[length:var(--w)_100%] bg-no-repeat"
-        style={{ left: inactiveLeft, backgroundPosition: `${-inactiveLeft}px 0` }}
+        className="pointer-events-none absolute top-1.5 right-0 h-4 rounded-l-[2px] rounded-r-lg bg-[image:var(--track,linear-gradient(var(--inactive),var(--inactive)))] bg-[length:var(--w)_100%] bg-no-repeat pointer-coarse:top-3.5"
+        style={{
+          left: `min(${width}px, ${positionX}px + var(--slider-gap))`,
+          backgroundPosition: `calc(-${positionX}px - var(--slider-gap)) 0`,
+        }}
       />
-      {showTicks && (
-        <div aria-hidden className="pointer-events-none absolute top-2.5 left-0 h-5 w-full">
+      {width > 0 && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute top-1.5 left-0 h-4 w-full pointer-coarse:top-3.5"
+        >
           {tickMarks.map((tick, index) => (
             <span
               key={index}
               className={cn(
-                "absolute top-1/2 -mt-0.5 -ml-0.5 size-1 rounded-full opacity-80",
+                "absolute top-1/2 -mt-0.5 -ml-0.5 size-1 rounded-full",
                 track
                   ? "bg-surface"
-                  : tick.active
-                    ? disabled
-                      ? "bg-inverse-on-surface"
-                      : "bg-on-primary"
-                    : disabled
-                      ? "bg-on-surface"
-                      : "bg-on-secondary-container",
+                  : disabled
+                    ? "bg-on-surface/38"
+                    : tick.active
+                      ? "bg-secondary-container"
+                      : "bg-primary",
               )}
               style={{ left: tick.pos }}
             />
@@ -219,10 +231,10 @@ export function Slider({
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute top-0.5 z-1 -ml-0.5 h-9 w-1 rounded-sm shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-surface)_80%,transparent)]",
-          disabled ? "bg-on-surface/38" : track ? "bg-on-surface" : "bg-primary",
-          (pressed || focused) && "-ml-px w-0.5",
-          focused && "outline-2 outline-offset-1 outline-primary",
+          "pointer-events-none absolute top-0 z-1 -ml-0.5 h-7 w-1 rounded-full transition-[width,margin] duration-(--duration-fast-spatial) ease-fast-spatial pointer-coarse:h-11",
+          disabled ? "bg-on-surface/38" : "bg-primary",
+          narrow && "-ml-px w-0.5",
+          focused && "outline-3 outline-offset-2 outline-secondary",
         )}
         style={{ left: positionX }}
       />

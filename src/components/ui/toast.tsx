@@ -6,7 +6,7 @@ export function Toast() {
   return (
     <div
       role="status"
-      className="fixed top-6 left-1/2 z-30 max-w-[min(90vw,640px)] -translate-x-1/2 rounded-2xl border border-on-surface/18 bg-surface/92 px-[18px] py-3 text-center text-sm leading-normal text-on-surface"
+      className="fixed bottom-6 left-1/2 z-30 flex min-h-12 w-max max-w-[min(calc(100vw-32px),600px)] -translate-x-1/2 animate-fade-up items-center rounded-[4px] bg-inverse-surface px-4 py-3.5 text-sm leading-5 text-inverse-on-surface shadow-level3"
     >
       {toast.message}
     </div>

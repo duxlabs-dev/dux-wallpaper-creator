@@ -4,19 +4,29 @@ import { isLastFocusable } from "@/lib/focus-dom";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { cn } from "@/lib/utils";
 import { ui, useUi, type Tab } from "@/store/ui";
-import { GlobalTab } from "./global-tab";
+import { ColorsTab } from "./colors-tab";
+import { CanvasTab } from "./canvas-tab";
+import { RandomizeButton, RandomizeSettings } from "./randomize-menu";
 import { ShapePicker } from "./shape-picker";
 import { ShapeTab } from "./shape-tab";
 import { Toolbar } from "./toolbar";
-import { Add, Shapes, Tune } from "material-symbols/rounded";
-import { Shapes as ShapesFilled } from "material-symbols/rounded/filled";
-import { RandomizeButton, RandomizeSettings } from "./randomize-menu";
+import { Add, AspectRatio, Palette, Shapes } from "material-symbols/rounded";
+import {
+  AspectRatio as AspectRatioFilled,
+  Palette as PaletteFilled,
+  Shapes as ShapesFilled,
+} from "material-symbols/rounded/filled";
 
 const tabs = [
   {
-    id: "global",
-    label: "Global",
-    icon: <Tune />,
+    id: "canvas",
+    label: "Canvas",
+    icon: (selected) => (selected ? <AspectRatioFilled /> : <AspectRatio />),
+  },
+  {
+    id: "colors",
+    label: "Colors",
+    icon: (selected) => (selected ? <PaletteFilled /> : <Palette />),
   },
   {
     id: "shape",
@@ -78,8 +88,10 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
               tabIndex={-1}
               className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-2 pt-5 pb-2"
             >
-              {tab === "global" ? (
-                <GlobalTab hueTrack={hueTrack} primaryHex={primaryHex} />
+              {tab === "canvas" ? (
+                <CanvasTab />
+              ) : tab === "colors" ? (
+                <ColorsTab hueTrack={hueTrack} primaryHex={primaryHex} />
               ) : (
                 <ShapeTab />
               )}
@@ -123,7 +135,7 @@ function AddShapeButton({ mini }: { mini: boolean }) {
         else ui.openPicker("add");
       }}
       className={cn(
-        "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-[15px] font-semibold text-on-primary focus-ring morph [&>svg]:size-6",
+        "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-base leading-6 font-medium text-on-primary focus-ring morph [&>svg]:size-6",
         mini
           ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px]"
           : "h-12 min-w-0 flex-1 rounded-3xl hover:state-layer-8 active:rounded-[14px] active:state-layer-12",

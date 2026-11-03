@@ -44,7 +44,7 @@ src/
   components/
     ui/        reusable primitives: button, icon button, slider, radio group, segmented, tabs, swatch, toast
     canvas/    preview and svg stage with drag, wheel resize and rotate
-    panel/     settings panel: toolbar, global tab, shape tab, shape picker
+    panel/     settings panel: toolbar, canvas tab, shape tab, shape picker
 ```
 
 ## JSON layout
