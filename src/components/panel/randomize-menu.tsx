@@ -179,18 +179,20 @@ export function RandomizeSettings() {
                 onChange={(value) => setOption("shapeCount", value)}
               />
               {options.shapeCount && (
-                <RangeFields
-                  prefix="shape-count"
-                  label="Shape count"
-                  minValue={options.countMin}
-                  maxValue={options.countMax}
-                  min={0}
-                  max={40}
-                  step={1}
-                  display=""
-                  setMin={(value) => setOption("countMin", value)}
-                  setMax={(value) => setOption("countMax", value)}
-                />
+                <NestedControls>
+                  <RangeFields
+                    prefix="shape-count"
+                    label="Shape count"
+                    minValue={options.countMin}
+                    maxValue={options.countMax}
+                    min={0}
+                    max={40}
+                    step={1}
+                    display=""
+                    setMin={(value) => setOption("countMin", value)}
+                    setMax={(value) => setOption("countMax", value)}
+                  />
+                </NestedControls>
               )}
             </div>
             <OptionSwitch
@@ -231,18 +233,19 @@ export function RandomizeSettings() {
                 onChange={(value) => setOption("minimumGap", value)}
               />
               {options.minimumGap && (
-                <SliderField
-                  id="randomize-gap"
-                  icon={<Distance />}
-                  label="Minimum gap"
-                  value={options.gap}
-                  min={0}
-                  max={400}
-                  step={8}
-                  display={`${options.gap} px`}
-                  className="pl-6"
-                  onChange={(value) => setOption("gap", value)}
-                />
+                <NestedControls>
+                  <SliderField
+                    id="randomize-gap"
+                    icon={<Distance />}
+                    label="Minimum gap"
+                    value={options.gap}
+                    min={0}
+                    max={400}
+                    step={8}
+                    display={`${options.gap} px`}
+                    onChange={(value) => setOption("gap", value)}
+                  />
+                </NestedControls>
               )}
             </div>
             <div className="flex flex-col gap-2">
@@ -255,34 +258,34 @@ export function RandomizeSettings() {
                 onChange={(value) => setOption("allowOverlap", value)}
               />
               {options.allowOverlap && (
-                <>
-                  <SliderField
-                    id="randomize-overlap-min"
-                    icon={<Layers />}
-                    label="Minimum overlap depth"
-                    value={options.overlapMin}
-                    min={0}
-                    max={100}
-                    step={1}
-                    display={`${options.overlapMin}%`}
-                    tooltip="Only applies to shapes that overlap; it does not force overlap."
-                    className="pl-6"
-                    onChange={(value) => setOption("overlapMin", Math.min(value, options.overlapMax))}
-                  />
-                  <SliderField
-                    id="randomize-overlap-max"
-                    icon={<Layers />}
-                    label="Maximum overlap"
-                    value={options.overlapMax}
-                    min={0}
-                    max={100}
-                    step={1}
-                    display={`${options.overlapMax}%`}
-                    tooltip="Caps how much one shape can overlap another."
-                    className="pl-6"
-                    onChange={(value) => setOption("overlapMax", Math.max(value, options.overlapMin))}
-                  />
-                </>
+                <NestedControls>
+                  <>
+                    <SliderField
+                      id="randomize-overlap-min"
+                      icon={<Layers />}
+                      label="Minimum overlap depth"
+                      value={options.overlapMin}
+                      min={0}
+                      max={100}
+                      step={1}
+                      display={`${options.overlapMin}%`}
+                      tooltip="Only applies to shapes that overlap; it does not force overlap."
+                      onChange={(value) => setOption("overlapMin", Math.min(value, options.overlapMax))}
+                    />
+                    <SliderField
+                      id="randomize-overlap-max"
+                      icon={<Layers />}
+                      label="Maximum overlap"
+                      value={options.overlapMax}
+                      min={0}
+                      max={100}
+                      step={1}
+                      display={`${options.overlapMax}%`}
+                      tooltip="Caps how much one shape can overlap another."
+                      onChange={(value) => setOption("overlapMax", Math.max(value, options.overlapMin))}
+                    />
+                  </>
+                </NestedControls>
               )}
             </div>
             <div className="flex flex-col gap-2">
@@ -295,25 +298,27 @@ export function RandomizeSettings() {
                 onChange={(value) => setOption("limitOverlapCount", value)}
               />
               {options.limitOverlapCount && (
-                <>
-                  <RangeFields
-                    prefix="overlap-count"
-                    label="Overlapping neighbors"
-                    minValue={options.minOverlapCount}
-                    maxValue={options.maxOverlapCount}
-                    min={0}
-                    max={40}
-                    step={1}
-                    display=""
-                    setMin={(value) => setOption("minOverlapCount", value)}
-                    setMax={(value) => setOption("maxOverlapCount", value)}
-                  />
-                  {!options.allowOverlap && options.minOverlapCount > 0 && (
-                    <p role="status" className="m-0 text-xs text-on-surface-variant">
-                      Minimum neighbors requires overlap; no-overlap takes priority.
-                    </p>
-                  )}
-                </>
+                <NestedControls>
+                  <>
+                    <RangeFields
+                      prefix="overlap-count"
+                      label="Overlapping neighbors"
+                      minValue={options.minOverlapCount}
+                      maxValue={options.maxOverlapCount}
+                      min={0}
+                      max={40}
+                      step={1}
+                      display=""
+                      setMin={(value) => setOption("minOverlapCount", value)}
+                      setMax={(value) => setOption("maxOverlapCount", value)}
+                    />
+                    {!options.allowOverlap && options.minOverlapCount > 0 && (
+                      <p role="status" className="m-0 text-xs text-on-surface-variant">
+                        Minimum neighbors requires overlap; no-overlap takes priority.
+                      </p>
+                    )}
+                  </>
+                </NestedControls>
               )}
             </div>
             <div className="flex flex-col gap-2">
@@ -337,18 +342,19 @@ export function RandomizeSettings() {
                 }
               />
               {options.canvasSpill && (
-                <SliderField
-                  id="randomize-bleed"
-                  icon={<OpenInFull />}
-                  label="Canvas spill"
-                  value={options.bleed}
-                  min={0}
-                  max={100}
-                  step={5}
-                  display={`${options.bleed}%`}
-                  className="pl-6"
-                  onChange={(value) => setOption("bleed", value)}
-                />
+                <NestedControls>
+                  <SliderField
+                    id="randomize-bleed"
+                    icon={<OpenInFull />}
+                    label="Canvas spill"
+                    value={options.bleed}
+                    min={0}
+                    max={100}
+                    step={5}
+                    display={`${options.bleed}%`}
+                    onChange={(value) => setOption("bleed", value)}
+                  />
+                </NestedControls>
               )}
             </div>
           </OptionGroup>
@@ -382,18 +388,20 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("blobEdges", value)}
             />
             {options.blobEdges && (
-              <RangeFields
-                prefix="blob-edges"
-                label="Blob edge count"
-                minValue={options.blobEdgesMin}
-                maxValue={options.blobEdgesMax}
-                min={BLOB_MIN_EDGES}
-                max={BLOB_MAX_EDGES}
-                step={1}
-                display=""
-                setMin={(value) => setOption("blobEdgesMin", value)}
-                setMax={(value) => setOption("blobEdgesMax", value)}
-              />
+              <NestedControls>
+                <RangeFields
+                  prefix="blob-edges"
+                  label="Blob edge count"
+                  minValue={options.blobEdgesMin}
+                  maxValue={options.blobEdgesMax}
+                  min={BLOB_MIN_EDGES}
+                  max={BLOB_MAX_EDGES}
+                  step={1}
+                  display=""
+                  setMin={(value) => setOption("blobEdgesMin", value)}
+                  setMax={(value) => setOption("blobEdgesMax", value)}
+                />
+              </NestedControls>
             )}
             <OptionSwitch
               id="randomize-blob-smoothness"
@@ -403,19 +411,21 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("blobSmoothness", value)}
             />
             {options.blobSmoothness && (
-              <RangeFields
-                prefix="blob-smoothness"
-                label="Blob smoothness"
-                minValue={options.blobSmoothnessMin}
-                maxValue={options.blobSmoothnessMax}
-                min={0}
-                max={SMOOTHNESS.length - 1}
-                step={1}
-                display=" step"
-                formatValue={(value) => `${value}${value === 1 ? " step" : " steps"}`}
-                setMin={(value) => setOption("blobSmoothnessMin", value)}
-                setMax={(value) => setOption("blobSmoothnessMax", value)}
-              />
+              <NestedControls>
+                <RangeFields
+                  prefix="blob-smoothness"
+                  label="Blob smoothness"
+                  minValue={options.blobSmoothnessMin}
+                  maxValue={options.blobSmoothnessMax}
+                  min={0}
+                  max={SMOOTHNESS.length - 1}
+                  step={1}
+                  display=" step"
+                  formatValue={(value) => `${value}${value === 1 ? " step" : " steps"}`}
+                  setMin={(value) => setOption("blobSmoothnessMin", value)}
+                  setMax={(value) => setOption("blobSmoothnessMax", value)}
+                />
+              </NestedControls>
             )}
             <OptionSwitch
               id="randomize-size"
@@ -425,18 +435,20 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("size", value)}
             />
             {options.size && (
-              <RangeFields
-                prefix="size"
-                label="Shape size"
-                minValue={options.sizeMin}
-                maxValue={options.sizeMax}
-                min={5}
-                max={options.canvasSpill ? 200 : 100}
-                step={5}
-                display="%"
-                setMin={(value) => setOption("sizeMin", value)}
-                setMax={(value) => setOption("sizeMax", value)}
-              />
+              <NestedControls>
+                <RangeFields
+                  prefix="size"
+                  label="Shape size"
+                  minValue={options.sizeMin}
+                  maxValue={options.sizeMax}
+                  min={5}
+                  max={options.canvasSpill ? 200 : 100}
+                  step={5}
+                  display="%"
+                  setMin={(value) => setOption("sizeMin", value)}
+                  setMax={(value) => setOption("sizeMax", value)}
+                />
+              </NestedControls>
             )}
             <OptionSwitch
               id="randomize-rotation"
@@ -446,18 +458,19 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("rotation", value)}
             />
             {options.rotation && (
-              <SliderField
-                id="randomize-rotation-range"
-                icon={<RotateRight />}
-                label="Rotation range"
-                value={options.rotationRange}
-                min={0}
-                max={180}
-                step={15}
-                display={`±${options.rotationRange}°`}
-                className="pl-6"
-                onChange={(value) => setOption("rotationRange", value)}
-              />
+              <NestedControls>
+                <SliderField
+                  id="randomize-rotation-range"
+                  icon={<RotateRight />}
+                  label="Rotation range"
+                  value={options.rotationRange}
+                  min={0}
+                  max={180}
+                  step={15}
+                  display={`±${options.rotationRange}°`}
+                  onChange={(value) => setOption("rotationRange", value)}
+                />
+              </NestedControls>
             )}
             <OptionSwitch
               id="randomize-opacity"
@@ -467,18 +480,20 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("opacity", value)}
             />
             {options.opacity && (
-              <RangeFields
-                prefix="opacity"
-                label="Shape opacity"
-                minValue={options.opacityMin}
-                maxValue={options.opacityMax}
-                min={5}
-                max={100}
-                step={5}
-                display="%"
-                setMin={(value) => setOption("opacityMin", value)}
-                setMax={(value) => setOption("opacityMax", value)}
-              />
+              <NestedControls>
+                <RangeFields
+                  prefix="opacity"
+                  label="Shape opacity"
+                  minValue={options.opacityMin}
+                  maxValue={options.opacityMax}
+                  min={5}
+                  max={100}
+                  step={5}
+                  display="%"
+                  setMin={(value) => setOption("opacityMin", value)}
+                  setMax={(value) => setOption("opacityMax", value)}
+                />
+              </NestedControls>
             )}
           </OptionGroup>
           <OptionGroup title="Colors" icon={<Palette />}>
@@ -490,18 +505,19 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("hue", value)}
             />
             {options.hue && (
-              <SliderField
-                id="randomize-hue-range"
-                icon={<Tune />}
-                label="Hue variation"
-                value={options.hueRange}
-                min={0}
-                max={180}
-                step={5}
-                display={`±${options.hueRange}°`}
-                className="pl-6"
-                onChange={(value) => setOption("hueRange", value)}
-              />
+              <NestedControls>
+                <SliderField
+                  id="randomize-hue-range"
+                  icon={<Tune />}
+                  label="Hue variation"
+                  value={options.hueRange}
+                  min={0}
+                  max={180}
+                  step={5}
+                  display={`±${options.hueRange}°`}
+                  onChange={(value) => setOption("hueRange", value)}
+                />
+              </NestedControls>
             )}
             <OptionSwitch
               id="randomize-fill"
@@ -534,19 +550,21 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("patternOpacity", value)}
             />
             {options.patternOpacity && (
-              <RangeFields
-                prefix="pattern-opacity"
-                label="Pattern opacity"
-                minValue={options.patternOpacityMin}
-                maxValue={options.patternOpacityMax}
-                min={PATTERN_OPACITY.min}
-                max={PATTERN_OPACITY.max}
-                step={0.02}
-                display="%"
-                displayFactor={100}
-                setMin={(value) => setOption("patternOpacityMin", value)}
-                setMax={(value) => setOption("patternOpacityMax", value)}
-              />
+              <NestedControls>
+                <RangeFields
+                  prefix="pattern-opacity"
+                  label="Pattern opacity"
+                  minValue={options.patternOpacityMin}
+                  maxValue={options.patternOpacityMax}
+                  min={PATTERN_OPACITY.min}
+                  max={PATTERN_OPACITY.max}
+                  step={0.02}
+                  display="%"
+                  displayFactor={100}
+                  setMin={(value) => setOption("patternOpacityMin", value)}
+                  setMax={(value) => setOption("patternOpacityMax", value)}
+                />
+              </NestedControls>
             )}
             <OptionSwitch
               id="randomize-pattern-scale"
@@ -556,18 +574,20 @@ export function RandomizeSettings() {
               onChange={(value) => setOption("patternScale", value)}
             />
             {options.patternScale && (
-              <RangeFields
-                prefix="pattern-scale"
-                label="Pattern scale"
-                minValue={options.patternScaleMin}
-                maxValue={options.patternScaleMax}
-                min={PATTERN_SCALE.min}
-                max={PATTERN_SCALE.max}
-                step={0.1}
-                display="×"
-                setMin={(value) => setOption("patternScaleMin", value)}
-                setMax={(value) => setOption("patternScaleMax", value)}
-              />
+              <NestedControls>
+                <RangeFields
+                  prefix="pattern-scale"
+                  label="Pattern scale"
+                  minValue={options.patternScaleMin}
+                  maxValue={options.patternScaleMax}
+                  min={PATTERN_SCALE.min}
+                  max={PATTERN_SCALE.max}
+                  step={0.1}
+                  display="×"
+                  setMin={(value) => setOption("patternScaleMin", value)}
+                  setMax={(value) => setOption("patternScaleMax", value)}
+                />
+              </NestedControls>
             )}
           </OptionGroup>
           <OptionGroup title="Layer order" icon={<Layers />}>
@@ -628,6 +648,10 @@ function OptionGroup({
   );
 }
 
+function NestedControls({ children }: { children: ReactNode }) {
+  return <div className="border-l border-outline-variant pl-3">{children}</div>;
+}
+
 function RangeFields({
   prefix,
   label,
@@ -668,7 +692,6 @@ function RangeFields({
         max={max}
         step={step}
         display={formatted(minValue)}
-        className="pl-6"
         onChange={(value) => setMin(Math.min(value, maxValue))}
       />
       <SliderField
@@ -680,7 +703,6 @@ function RangeFields({
         max={max}
         step={step}
         display={formatted(maxValue)}
-        className="pl-6"
         onChange={(value) => setMax(Math.max(value, minValue))}
       />
     </>
