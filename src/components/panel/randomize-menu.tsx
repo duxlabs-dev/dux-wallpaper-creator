@@ -458,6 +458,7 @@ export function RandomizeSettings() {
                 step={0.02}
                 display="%"
                 displayFactor={100}
+                displayFactor={100}
                 setMin={(value) => setOption("patternOpacityMin", value)}
                 setMax={(value) => setOption("patternOpacityMax", value)}
               />
