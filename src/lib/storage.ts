@@ -10,6 +10,15 @@ const KEY = "wallpaper-layout-v1";
 const RANDOMIZE_OPTIONS_KEY = "wallpaper-randomize-options-v1";
 const RANDOMIZE_OPTIONS_RESET_EVENT = "wallpaper-randomize-options-reset";
 const fallbackCounters = new Map<string, number>();
+const PREVIOUS_RANDOMIZE_DEFAULTS: RandomizeOptions = {
+  ...DEFAULT_RANDOMIZE_OPTIONS,
+  shapeCount: false,
+  hue: false,
+  pattern: false,
+  allowOverlap: false,
+  overlapMin: 5,
+  overlapMax: 25,
+};
 
 export const incrementCounter = (key: string, limit: number, legacyKey?: string) => {
   let count = fallbackCounters.get(key) ?? 0;
@@ -70,9 +79,12 @@ export const loadRandomizeOptions = (): RandomizeOptions => {
     const saved: unknown = JSON.parse(localStorage.getItem(RANDOMIZE_OPTIONS_KEY) ?? "null");
     if (!saved || typeof saved !== "object") return DEFAULT_RANDOMIZE_OPTIONS;
     const raw = saved as Record<string, unknown>;
+    const isPreviousDefault = (
+      Object.keys(PREVIOUS_RANDOMIZE_DEFAULTS) as (keyof RandomizeOptions)[]
+    ).every((key) => raw[key] === PREVIOUS_RANDOMIZE_DEFAULTS[key]);
     const options = { ...DEFAULT_RANDOMIZE_OPTIONS };
     for (const key of Object.keys(options) as (keyof RandomizeOptions)[]) {
-      const value = raw[key];
+      const value = isPreviousDefault ? undefined : raw[key];
       if (typeof options[key] === "boolean" && typeof value === "boolean")
         options[key] = value as never;
       const range = randomizeNumberRanges[key];
