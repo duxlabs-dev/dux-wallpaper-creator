@@ -361,6 +361,76 @@ export const randomizeLayers = (
     placed.push(layer);
   }
 
+  let bestScene = [...placed];
+  let bestSceneScore = scoreScene(bestScene);
+  if (
+    (bestSceneScore.hard > 0 || bestSceneScore.soft > 0) &&
+    (options.positionX || options.positionY)
+  ) {
+    let workingScore = bestSceneScore;
+    const movableIndices = placed.map((_, index) => index);
+    for (let pass = 0; pass < 4; pass += 1) {
+      for (const index of shuffle(movableIndices)) {
+        const layer = placed[index];
+        const extent = extentFactorsFor(layer);
+        const halfWidth = layer.size * extent.x;
+        const halfHeight = layer.size * extent.y;
+        const bleed = options.canvasSpill ? (options.bleed / 100) * layer.size : 0;
+        const randomPosition = (canvasExtent: number, halfShape: number, current: number) => {
+          const min = halfShape - layer.size / 2 - bleed;
+          const max = canvasExtent - halfShape - layer.size / 2 + bleed;
+          return max >= min ? Math.round(rnd(min, max)) : current;
+        };
+        let bestCandidate = layer;
+        let bestCandidateScore = workingScore;
+        let equalCandidate: Layer | undefined;
+        for (let attempt = 0; attempt < RANDOMIZE_ATTEMPTS; attempt += 1) {
+          const candidate = {
+            ...layer,
+            x: options.positionX ? randomPosition(canvas.width, halfWidth, layer.x) : layer.x,
+            y: options.positionY ? randomPosition(canvas.height, halfHeight, layer.y) : layer.y,
+          };
+          const candidateScene = [...placed];
+          candidateScene[index] = candidate;
+          const candidateScore = scoreScene(candidateScene);
+          if (
+            candidateScore.hard < bestCandidateScore.hard ||
+            (candidateScore.hard === bestCandidateScore.hard &&
+              candidateScore.soft < bestCandidateScore.soft)
+          ) {
+            bestCandidate = candidate;
+            bestCandidateScore = candidateScore;
+          } else if (
+            candidateScore.hard === workingScore.hard &&
+            candidateScore.soft === workingScore.soft &&
+            Math.random() < 0.02
+          ) {
+            equalCandidate = candidate;
+          }
+        }
+        if (
+          bestCandidateScore.hard < workingScore.hard ||
+          bestCandidateScore.soft < workingScore.soft
+        ) {
+          placed[index] = bestCandidate;
+          workingScore = bestCandidateScore;
+        } else if (equalCandidate && Math.random() < 0.15) {
+          placed[index] = equalCandidate;
+        }
+        if (
+          workingScore.hard < bestSceneScore.hard ||
+          (workingScore.hard === bestSceneScore.hard && workingScore.soft < bestSceneScore.soft)
+        ) {
+          bestScene = [...placed];
+          bestSceneScore = workingScore;
+        }
+        if (bestSceneScore.hard === 0 && bestSceneScore.soft === 0) break;
+      }
+      if (bestSceneScore.hard === 0 && bestSceneScore.soft === 0) break;
+    }
+    placed.splice(0, placed.length, ...bestScene);
+  }
+
   let prefs = currentPrefs;
   if (options.hue)
     prefs = { ...prefs, hue: normDeg(prefs.hue + rnd(-options.hueRange, options.hueRange)) };
