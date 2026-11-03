@@ -3,14 +3,17 @@ import { Button } from "@/components/ui/button";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { ui } from "@/store/ui";
 import { wallpaper } from "@/store/wallpaper";
-import { DeleteForever } from "material-symbols/rounded";
+import { Check, DeleteForever } from "material-symbols/rounded";
 import { FormatPicker } from "./format-picker";
 import { PatternPicker } from "./pattern-picker";
 
 export function CanvasTab() {
   const holdStarted = useRef<number | null>(null);
   const animationFrame = useRef<number | null>(null);
+  const doneTimer = useRef<number | null>(null);
   const [resetProgress, setResetProgress] = useState(0);
+  const [holding, setHolding] = useState(false);
+  const [done, setDone] = useState(false);
 
   const cancelHold = () => {
     if (holdStarted.current !== null) {
@@ -18,22 +21,36 @@ export function CanvasTab() {
       if (elapsed < 500) ui.showToast("Hold the button to clear everything.", 2000);
     }
     holdStarted.current = null;
+    setHolding(false);
     if (animationFrame.current !== null) cancelAnimationFrame(animationFrame.current);
     animationFrame.current = null;
     setResetProgress(0);
+    if (done) {
+      setDone(false);
+    }
   };
 
   const beginHold = () => {
     if (holdStarted.current !== null) return;
     holdStarted.current = performance.now();
+    setHolding(true);
+    if (doneTimer.current !== null) {
+      clearTimeout(doneTimer.current);
+      doneTimer.current = null;
+    }
     const updateProgress = () => {
       if (holdStarted.current === null) return;
       const progress = Math.min((performance.now() - holdStarted.current) / 500, 1);
       setResetProgress(progress);
       if (progress === 1) {
         holdStarted.current = null;
+        setHolding(false);
         animationFrame.current = null;
+        setDone(true);
         wallpaper.clearAll();
+        doneTimer.current = window.setTimeout(() => {
+          setDone(false);
+        }, 700);
         return;
       }
       animationFrame.current = requestAnimationFrame(updateProgress);
@@ -44,6 +61,7 @@ export function CanvasTab() {
   useEffect(
     () => () => {
       if (animationFrame.current !== null) cancelAnimationFrame(animationFrame.current);
+      if (doneTimer.current !== null) clearTimeout(doneTimer.current);
     },
     [],
   );
@@ -61,7 +79,7 @@ export function CanvasTab() {
         <div className="relative">
           <Button
             variant="danger"
-            title="Hold for 500 ms to clear layers and reset all settings"
+            title={holding ? undefined : "Hold for 500 ms to clear layers and reset all settings"}
             aria-keyshortcuts={ariaKeyshortcuts("X")}
             onPointerDown={beginHold}
             onPointerUp={cancelHold}
@@ -84,9 +102,23 @@ export function CanvasTab() {
                 backgroundColor: "color-mix(in srgb, currentColor 10%, transparent)",
               }}
             />
-            <span className="relative z-10 inline-flex items-center gap-2">
-              <DeleteForever />
-              Clear everything
+            <span className="relative z-10 flex h-5 items-center justify-center overflow-hidden">
+              <span
+                className={`inline-flex items-center gap-2 transition-[transform,opacity] duration-300 ease-emphasized ${
+                  done ? "translate-y-[-120%] opacity-0" : "translate-y-0 opacity-100"
+                }`}
+              >
+                <DeleteForever />
+                Clear everything
+              </span>
+              <span
+                className={`absolute inset-0 inline-flex items-center justify-center gap-2 transition-[transform,opacity] duration-300 ease-emphasized ${
+                  done ? "translate-y-0 opacity-100" : "translate-y-[120%] opacity-0"
+                }`}
+              >
+                <Check />
+                Done
+              </span>
             </span>
           </Button>
         </div>
