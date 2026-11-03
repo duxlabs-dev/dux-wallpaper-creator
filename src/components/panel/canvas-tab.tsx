@@ -27,6 +27,10 @@ export function CanvasTab() {
     setResetProgress(0);
     if (done) {
       setDone(false);
+      if (doneTimer.current !== null) {
+        clearTimeout(doneTimer.current);
+        doneTimer.current = null;
+      }
     }
   };
 
@@ -38,6 +42,9 @@ export function CanvasTab() {
       clearTimeout(doneTimer.current);
       doneTimer.current = null;
     }
+    if (done) {
+      setDone(false);
+    }
     const updateProgress = () => {
       if (holdStarted.current === null) return;
       const progress = Math.min((performance.now() - holdStarted.current) / 500, 1);
@@ -48,9 +55,6 @@ export function CanvasTab() {
         animationFrame.current = null;
         setDone(true);
         wallpaper.clearAll();
-        doneTimer.current = window.setTimeout(() => {
-          setDone(false);
-        }, 700);
         return;
       }
       animationFrame.current = requestAnimationFrame(updateProgress);
