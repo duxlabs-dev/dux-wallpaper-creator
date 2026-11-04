@@ -8,16 +8,10 @@ import { Switch as OptionSwitch } from "@/components/ui/switch";
 import { BLOB_MAX_EDGES, BLOB_MIN_EDGES, SMOOTHNESS } from "@/lib/shapes";
 import { PATTERN_OPACITY, PATTERN_SCALE } from "@/lib/patterns";
 import type { RandomizeOptions } from "@/lib/randomize";
-import {
-  incrementCounter,
-  loadRandomizeOptions,
-  persistRandomizeOptions,
-  subscribeToRandomizeOptionsReset,
-} from "@/lib/storage";
-import { DEFAULT_RANDOMIZE_OPTIONS } from "@/lib/randomize";
+import { loadRandomizeOptions, persistRandomizeOptions } from "@/lib/storage";
 import { randomizeWithOptions } from "@/lib/randomize-action";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
-import { ui, uiStore, useUi } from "@/store/ui";
+import { ui, useUi } from "@/store/ui";
 import { useWallpaper } from "@/store/wallpaper";
 import {
   ArrowRange,
@@ -97,48 +91,22 @@ const SELECT_ALL_RANDOMIZE_KEYS = [
 export function RandomizeButton({ mini }: { mini: boolean }) {
   const open = useUi((state) => state.randomizeOpen);
   const button = useRef<HTMLButtonElement>(null);
-  const holdTimer = useRef<number | null>(null);
   const wasOpen = useRef(open);
-  const clearHoldTimer = () => {
-    if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
-    holdTimer.current = null;
-  };
   useEffect(() => {
     if (wasOpen.current && !open) button.current?.focus({ preventScroll: true });
     wasOpen.current = open;
   }, [open]);
-  useEffect(
-    () => () => {
-      if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
-    },
-    [],
-  );
   return (
     <IconButton
       ref={button}
       label="Randomize"
-      title="Click to randomize (I); hold 250 ms or press Shift+I for options"
+      title="Open randomize options (Shift+I)"
       aria-controls="panel-randomize"
       aria-expanded={open}
-      aria-keyshortcuts={ariaKeyshortcuts("I")}
+      aria-keyshortcuts={ariaKeyshortcuts("Shift+I")}
       variant="tonal"
       className={mini ? "size-12 rounded-[14px]" : "size-12 rounded-3xl"}
-      onPointerDown={(event) => {
-        if (event.button !== 0 || !event.isPrimary) return;
-        clearHoldTimer();
-        holdTimer.current = window.setTimeout(() => {
-          holdTimer.current = null;
-          ui.setRandomizeOpen(true);
-        }, 250);
-      }}
-      onPointerUp={clearHoldTimer}
-      onPointerCancel={clearHoldTimer}
-      onPointerLeave={clearHoldTimer}
-      onClick={() => {
-        if (uiStore.state.randomizeOpen) return;
-        const showDiscoveryHint = incrementCounter("dux-randomize-options-hint-count", 3);
-        randomizeWithOptions(undefined, showDiscoveryHint);
-      }}
+      onClick={() => ui.setRandomizeOpen(true)}
     >
       <Casino />
     </IconButton>
@@ -159,11 +127,6 @@ export function RandomizeSettings() {
   }, [open]);
 
   useEffect(() => persistRandomizeOptions(options), [options]);
-
-  useEffect(
-    () => subscribeToRandomizeOptionsReset(() => setOptions({ ...DEFAULT_RANDOMIZE_OPTIONS })),
-    [],
-  );
 
   const setOption = <K extends keyof RandomizeOptions>(key: K, value: RandomizeOptions[K]) =>
     setOptions((current) => ({ ...current, [key]: value }));

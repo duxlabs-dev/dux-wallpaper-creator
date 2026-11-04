@@ -16,7 +16,7 @@ import { clampOpacity, clampScale, defaultPrefs, type Prefs } from "@/lib/prefs"
 import { createBlob, isBlob, randomShapeIndex, shapeIndex } from "@/lib/shapes";
 import { randomizeLayers, randomPlacement, type RandomizeOptions } from "@/lib/randomize";
 import { snapPosition } from "@/lib/snap";
-import { loadSaved, persist, resetRandomizeOptions } from "@/lib/storage";
+import { loadSaved, persist } from "@/lib/storage";
 import type { SchemeVariant, SpecVersion } from "@/lib/theme";
 import { normDeg } from "@/lib/utils";
 
@@ -316,7 +316,6 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
         ...withCanvas({ ...defaultPrefs(), pattern: "none" }),
         dark: true,
       });
-      resetRandomizeOptions();
     },
 
     setDark: (dark: boolean) => patch({ dark }),

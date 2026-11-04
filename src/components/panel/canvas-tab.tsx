@@ -83,7 +83,9 @@ export function CanvasTab() {
         <div className="relative">
           <Button
             variant="danger"
-            title={holding ? undefined : "Hold for 500 ms to clear layers and reset all settings"}
+            title={
+              holding ? undefined : "Hold for 500 ms to clear layers and reset canvas settings"
+            }
             aria-keyshortcuts={ariaKeyshortcuts("X")}
             onPointerDown={beginHold}
             onPointerUp={cancelHold}

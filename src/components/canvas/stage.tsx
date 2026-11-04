@@ -96,7 +96,7 @@ export function Stage({ scale }: StageProps) {
       moved = true;
       if (!showedSnapHint) {
         showedSnapHint = true;
-        if (incrementCounter("dux-snap-hint-count", SNAP_HINT_LIMIT, "dux-snap-hint-shown"))
+        if (incrementCounter("dux-snap-hint-count", SNAP_HINT_LIMIT))
           ui.showToast(`Hold ${keyLabel("Mod")} while dragging to snap`);
       }
       const x = origin.lx + deltaX / scaleRef.current;
