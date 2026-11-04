@@ -11,10 +11,10 @@ export const randomizeWithOptions = (
   if (!satisfied) {
     ui.showToast(
       showDiscoveryHint
-        ? "Some shapes could not meet the rules. Hold Randomize 250 ms or press Alt+Shift+R for options."
+        ? "Some shapes could not meet the rules. Hold Randomize 250 ms or press Shift+I for options."
         : "Some shapes could not meet the requested placement rules",
     );
   } else if (showDiscoveryHint) {
-    ui.showToast("Hold Randomize 250 ms or press Alt+Shift+R for options");
+    ui.showToast("Hold Randomize 250 ms or press Shift+I for options");
   }
 };

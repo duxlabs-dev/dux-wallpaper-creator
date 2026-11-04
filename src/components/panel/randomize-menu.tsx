@@ -117,10 +117,10 @@ export function RandomizeButton({ mini }: { mini: boolean }) {
     <IconButton
       ref={button}
       label="Randomize"
-      title="Click to randomize (Alt+R); hold 250 ms or press Alt+Shift+R for options"
+      title="Click to randomize (I); hold 250 ms or press Shift+I for options"
       aria-controls="panel-randomize"
       aria-expanded={open}
-      aria-keyshortcuts={ariaKeyshortcuts("Alt+R")}
+      aria-keyshortcuts={ariaKeyshortcuts("I")}
       variant="tonal"
       className={mini ? "size-12 rounded-[14px]" : "size-12 rounded-3xl"}
       onPointerDown={(event) => {
