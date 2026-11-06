@@ -621,7 +621,14 @@ export function RandomizeSettings() {
       <div className="flex flex-col gap-2 px-3 py-3">
         <Button
           variant="filled"
-          disabled={!count && !options.shapeCount}
+          disabled={
+            !count &&
+            !options.shapeCount &&
+            !options.hue &&
+            !options.pattern &&
+            !options.patternOpacity &&
+            !options.patternScale
+          }
           onClick={randomize}
           className="w-full"
         >
