@@ -117,6 +117,11 @@ export const DEFAULT_RANDOMIZE_OPTIONS: RandomizeOptions = {
 const RANDOMIZE_ATTEMPTS = 240;
 // Chance that "Shape or blob type" turns a shape into a blob.
 const BLOB_RANDOM_CHANCE = 0.3;
+// Repair pass: how often every layer may be moved, how often an equally good position is
+// remembered, and how often a layer is then moved there to get out of a dead end.
+const REPAIR_PASSES = 4;
+const EQUAL_POSITION_CHANCE = 0.02;
+const EQUAL_MOVE_CHANCE = 0.15;
 
 const randomSize = (canvas: Size) =>
   Math.round(rnd(400, 860) * (Math.min(canvas.width, canvas.height) / 1080));
@@ -400,7 +405,7 @@ export const randomizeLayers = (
   ) {
     let workingScore = bestSceneScore;
     const movableIndices = placed.map((_, index) => index);
-    for (let pass = 0; pass < 4; pass += 1) {
+    for (let pass = 0; pass < REPAIR_PASSES; pass += 1) {
       for (const index of shuffle(movableIndices)) {
         const layer = placed[index];
         let bestCandidate = layer;
@@ -421,7 +426,7 @@ export const randomizeLayers = (
           } else if (
             candidateScore.hard === workingScore.hard &&
             candidateScore.soft === workingScore.soft &&
-            Math.random() < 0.02
+            Math.random() < EQUAL_POSITION_CHANCE
           ) {
             // Occasionally remember an equally good position, to get unstuck from a dead end.
             equalCandidate = candidate;
@@ -433,7 +438,7 @@ export const randomizeLayers = (
         ) {
           placed[index] = bestCandidate;
           workingScore = bestCandidateScore;
-        } else if (equalCandidate && Math.random() < 0.15) {
+        } else if (equalCandidate && Math.random() < EQUAL_MOVE_CHANCE) {
           placed[index] = equalCandidate;
         }
         if (

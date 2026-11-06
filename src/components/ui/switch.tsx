@@ -1,13 +1,4 @@
-import {
-  Check,
-  FormatColorFill,
-  Layers,
-  Opacity,
-  OpenInFull,
-  RotateRight,
-  Texture,
-  Visibility,
-} from "material-symbols/rounded";
+import { Check } from "material-symbols/rounded";
 import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -20,30 +11,6 @@ interface SwitchProps {
   tooltip?: string;
   icon?: ReactNode;
   className?: string;
-}
-
-function defaultSwitchIcon(label: string) {
-  const lower = label.toLowerCase();
-
-  if (lower.includes("shape") || lower.includes("blob") || lower.includes("type"))
-    return <Layers />;
-  if (lower.includes("color") || lower.includes("hue") || lower.includes("fill"))
-    return <FormatColorFill />;
-  if (lower.includes("pattern") || lower.includes("spread")) return <Texture />;
-  if (
-    lower.includes("position") ||
-    lower.includes("horizontal") ||
-    lower.includes("vertical") ||
-    lower.includes("gap") ||
-    lower.includes("distance") ||
-    lower.includes("overlap")
-  )
-    return <Visibility />;
-  if (lower.includes("rotation") || lower.includes("angle")) return <RotateRight />;
-  if (lower.includes("opacity") || lower.includes("transparency")) return <Opacity />;
-  if (lower.includes("size") || lower.includes("scale") || lower.includes("spill"))
-    return <OpenInFull />;
-  return <Check />;
 }
 
 export function Switch({ id, label, checked, onChange, tooltip, icon, className }: SwitchProps) {
@@ -83,7 +50,7 @@ export function Switch({ id, label, checked, onChange, tooltip, icon, className 
         className="flex min-w-0 items-center gap-2 text-sm font-semibold text-on-surface"
       >
         <span className="flex size-6 shrink-0 items-center justify-center text-on-surface-variant [&>svg]:size-5">
-          {icon ?? defaultSwitchIcon(label)}
+          {icon ?? <Check />}
         </span>
         {tooltip ? (
           <DelayedTooltip content={tooltip}>

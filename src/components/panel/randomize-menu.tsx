@@ -41,31 +41,7 @@ import {
   ZoomOutMap,
 } from "material-symbols/rounded";
 
-const SWITCH_KEYS = [
-  "positionX",
-  "positionY",
-  "shapeCount",
-  "shapeType",
-  "shapeIndex",
-  "blobContour",
-  "blobEdges",
-  "blobSmoothness",
-  "size",
-  "rotation",
-  "opacity",
-  "fill",
-  "overlapColor",
-  "hue",
-  "pattern",
-  "patternOpacity",
-  "patternScale",
-  "layerOrder",
-  "minimumGap",
-  "allowOverlap",
-  "limitOverlapCount",
-  "canvasSpill",
-] as const satisfies readonly (keyof RandomizeOptions)[];
-
+// "Select all" doesn't include limiting overlap count and minimum gap since these options would make the result less random
 const SELECT_ALL_RANDOMIZE_KEYS = [
   "positionX",
   "positionY",
@@ -87,6 +63,12 @@ const SELECT_ALL_RANDOMIZE_KEYS = [
   "layerOrder",
   "allowOverlap",
   "canvasSpill",
+] as const satisfies readonly (keyof RandomizeOptions)[];
+
+const SWITCH_KEYS = [
+  ...SELECT_ALL_RANDOMIZE_KEYS,
+  "minimumGap",
+  "limitOverlapCount",
 ] as const satisfies readonly (keyof RandomizeOptions)[];
 
 export function RandomizeButton({ mini }: { mini: boolean }) {
@@ -512,7 +494,7 @@ export function RandomizeSettings() {
               label="Hue"
               checked={options.hue}
               icon={<FormatColorFill />}
-              tooltip="Shifts each layer’s hue within a range."
+              tooltip="Shifts the hue of all colors by a random amount within the range."
               onChange={(value) => setOption("hue", value)}
             />
             {options.hue && (
