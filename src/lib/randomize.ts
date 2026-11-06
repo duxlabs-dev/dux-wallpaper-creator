@@ -113,7 +113,9 @@ export const DEFAULT_RANDOMIZE_OPTIONS: RandomizeOptions = {
   bleed: 35,
 };
 
+// Random positions tried per shape before settling for the best one found.
 const RANDOMIZE_ATTEMPTS = 240;
+// Chance that "Shape or blob type" turns a shape into a blob.
 const BLOB_RANDOM_CHANCE = 0.3;
 
 const randomSize = (canvas: Size) =>
@@ -134,11 +136,17 @@ export const randomPlacement = (canvas: Size, spec: ShapeSpec): Layer => {
   };
 };
 
+// A new layer for "Shape count": a copy of an existing layer, or a circle if there are none.
 const randomizeLayerBase = (canvas: Size, template?: Layer): Layer =>
   template
     ? { ...template, id: newLayerId() }
     : randomPlacement(canvas, { type: "shape", shape: shapeIndex("circle", 0) });
 
+/**
+ * Randomizes the enabled properties of every layer, then places the layers so they follow the
+ * placement rules (overlap, gap, canvas spill, neighbors) as well as possible.
+ * `satisfied` is false when some rule could not be met; the caller shows a toast then.
+ */
 export const randomizeLayers = (
   layers: Layer[],
   canvas: Size,
@@ -147,6 +155,7 @@ export const randomizeLayers = (
 ): { layers: Layer[]; prefs: Prefs; satisfied: boolean } => {
   type Bounds = { left: number; right: number; top: number; bottom: number };
   const boundsCache = new WeakMap<Layer, Bounds>();
+  // Placement candidates are copies of their layer with the same rotation, so they share its extent.
   const extentCache = new WeakMap<Layer, Bounds>();
   // Edges of the rotated outline relative to the layer center, in units of `size`.
   const extentFor = (layer: Layer): Bounds => {
@@ -170,6 +179,7 @@ export const randomizeLayers = (
     extentCache.set(layer, extent);
     return extent;
   };
+  // Bounding box of the layer on the canvas, in px.
   const boundsFor = (layer: Layer) => {
     const cached = boundsCache.get(layer);
     if (cached) return cached;
@@ -185,6 +195,8 @@ export const randomizeLayers = (
     boundsCache.set(layer, bounds);
     return bounds;
   };
+  // Copy of the layer at a random position on the enabled axes, keeping its outline within the
+  // canvas (plus the allowed spill). Positions are rounded inward so they never stick out.
   const withRandomPosition = (layer: Layer): Layer => {
     const extent = extentFor(layer);
     const bleed = options.canvasSpill ? (options.bleed / 100) * layer.size : 0;
@@ -205,6 +217,7 @@ export const randomizeLayers = (
     extentCache.set(candidate, extent);
     return candidate;
   };
+  // Distance between the bounding boxes of two layers; 0 when they touch or overlap.
   const gapFor = (a: Layer, b: Layer) => {
     const boundsA = boundsFor(a);
     const boundsB = boundsFor(b);
@@ -212,6 +225,8 @@ export const randomizeLayers = (
     const dy = Math.max(0, boundsA.top - boundsB.bottom, boundsB.top - boundsA.bottom);
     return Math.hypot(dx, dy);
   };
+  // How badly a scene breaks the rules; 0 means it follows them all. Scenes are compared by
+  // `hard` first (spill, no overlap, gap, max neighbors), then `soft` (overlap depth, min neighbors).
   const scoreScene = (scene: Layer[]) => {
     let hard = 0;
     let soft = 0;
@@ -251,6 +266,7 @@ export const randomizeLayers = (
           hard += Math.max(0, options.gap - gapFor(layer, other));
       }
     }
+    // Weighted by size so that breaking the rule with a big shape counts more.
     if (options.limitOverlapCount) {
       for (let index = 0; index < scene.length; index += 1) {
         const layer = scene[index];
@@ -262,6 +278,7 @@ export const randomizeLayers = (
     return { hard, soft };
   };
 
+  // Shape count: drop layers from the end, or add copies of existing ones.
   let startingLayers = layers;
   if (options.shapeCount) {
     const targetCount = Math.round(rnd(options.countMin, options.countMax));
@@ -272,6 +289,7 @@ export const randomizeLayers = (
     }
   }
 
+  // Randomize each layer's own properties, then place it among the layers placed before it.
   const placed: Layer[] = [];
   for (const original of startingLayers) {
     let layer = original;
@@ -298,12 +316,16 @@ export const randomizeLayers = (
       layer = { ...layer, ...createBlob(edges, smoothness) };
     }
 
+    // Rotation comes before size: how much room a shape needs depends on its rotation.
     if (options.rotation)
       layer = { ...layer, rot: normDeg(rnd(-options.rotationRange, options.rotationRange)) };
     if (options.size) {
       const minDimension = Math.min(canvas.width, canvas.height);
       let minSize = (options.sizeMin / 100) * minDimension;
       let maxSize = (options.sizeMax / 100) * minDimension;
+      // Without spill, cap the size so the shape fits: anywhere on the canvas along an axis that
+      // gets a random position, or around its current center along a fixed one. Staying inside
+      // wins over the minimum size.
       if (!options.canvasSpill) {
         const extent = extentFor(layer);
         const centerX = layer.x + layer.size / 2;
@@ -324,9 +346,12 @@ export const randomizeLayers = (
     if (options.fill) layer = { ...layer, fill: randomFill() };
     if (options.overlapColor) layer = { ...layer, overlap: randomOverlap(layer.fill) };
 
+    // Try random positions and keep the one that breaks the rules least. With spread, collect
+    // several valid positions and take the one furthest from other shapes and the edges.
     if (options.positionX || options.positionY) {
       let best = layer;
       let bestScore = { hard: Number.POSITIVE_INFINITY, soft: Number.POSITIVE_INFINITY };
+      // 1 valid position at 0% spread, up to all attempts at 100%.
       const candidatesToCompare =
         options.spreadStrength > 0
           ? Math.max(1, Math.ceil(RANDOMIZE_ATTEMPTS ** (options.spreadStrength / 100)))
@@ -365,6 +390,8 @@ export const randomizeLayers = (
     placed.push(layer);
   }
 
+  // Repair pass: layers placed early couldn't account for later ones (e.g. min neighbors), so if
+  // rules are still broken, move one layer at a time to a better position and keep the best scene.
   let bestScene = [...placed];
   let bestSceneScore = scoreScene(bestScene);
   if (
@@ -396,6 +423,7 @@ export const randomizeLayers = (
             candidateScore.soft === workingScore.soft &&
             Math.random() < 0.02
           ) {
+            // Occasionally remember an equally good position, to get unstuck from a dead end.
             equalCandidate = candidate;
           }
         }
@@ -422,6 +450,7 @@ export const randomizeLayers = (
     placed.splice(0, placed.length, ...bestScene);
   }
 
+  // Background and colors.
   let prefs = currentPrefs;
   if (options.hue)
     prefs = { ...prefs, hue: normDeg(prefs.hue + rnd(-options.hueRange, options.hueRange)) };
@@ -436,6 +465,7 @@ export const randomizeLayers = (
       ...prefs,
       patternScale: clampScale(rnd(options.patternScaleMin, options.patternScaleMax)),
     };
+  // Stacking order doesn't affect the rules, so it's shuffled after placement.
   const randomizedLayers = options.layerOrder ? shuffle(placed) : placed;
   const finalScore = scoreScene(placed);
   return {
