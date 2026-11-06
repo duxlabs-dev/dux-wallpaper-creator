@@ -42,6 +42,8 @@ export interface WallpaperState {
 
 type Snapshot = Pick<WallpaperState, "layers" | "prefs" | "dark">;
 
+export const DEFAULT_DARK = true;
+
 const HISTORY_LIMIT = 100;
 const BURST_MS = 600;
 
@@ -88,7 +90,7 @@ const initialState = (): WallpaperState => {
     layers: saved?.layers ?? defaultLayers(),
     prefs,
     canvas: canvasSize(prefs.format, prefs.orientation, prefs.custom),
-    dark: saved?.dark ?? true,
+    dark: saved?.dark ?? DEFAULT_DARK,
     activeId: null,
     canUndo: false,
     canRedo: false,
@@ -310,14 +312,15 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
     },
 
     clearAll: () => {
+      const { opacity, patternScale } = defaultPrefs();
       commit({
         layers: [],
         activeId: null,
-        ...withCanvas({ ...defaultPrefs(), pattern: "none" }),
+        prefs: { ...get().prefs, pattern: "none", opacity, patternScale },
       });
     },
 
-    setDark: (dark: boolean) => patch({ dark }),
+    setDark: (dark: boolean) => commit({ dark }),
 
     setHue: (hue: number) => commit({ prefs: { ...get().prefs, hue: normDeg(hue) } }),
 
@@ -357,11 +360,34 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
       commit({ ...nextCanvas, layers: rescaleLayers(layers, canvas, nextCanvas.canvas) });
     },
 
+    resetCanvas: () => {
+      const { prefs, canvas, layers } = get();
+      const { format, orientation, custom, pattern, opacity, patternScale } = defaultPrefs();
+      const next = withCanvas({
+        ...prefs,
+        format,
+        orientation,
+        custom,
+        pattern,
+        opacity,
+        patternScale,
+      });
+      commit({ ...next, layers: rescaleLayers(layers, canvas, next.canvas) });
+    },
+
+    resetColors: () => {
+      const { hue, scheme, spec } = defaultPrefs();
+      commit({ prefs: { ...get().prefs, hue, scheme, spec }, dark: DEFAULT_DARK });
+    },
+
     importLayout: (layout: LayoutFile) => {
       const prefs = { ...get().prefs };
       if (layout.pattern) prefs.pattern = layout.pattern;
       if (layout.strength !== undefined) prefs.opacity = layout.strength;
-      commit({ layers: layout.layers, activeId: null, prefs });
+      if (layout.hue !== undefined) prefs.hue = layout.hue;
+      if (layout.scheme) prefs.scheme = layout.scheme;
+      if (layout.spec) prefs.spec = layout.spec;
+      commit({ layers: layout.layers, activeId: null, prefs, dark: layout.dark ?? get().dark });
     },
 
     undo: () => {
@@ -389,7 +415,7 @@ export const selectActiveIndex = (state: WallpaperState) =>
   state.layers.findIndex((layer) => layer.id === state.activeId);
 
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
-let lastPersisted: Snapshot & { dark: boolean } = wallpaperStore.state;
+let lastPersisted: Snapshot = wallpaperStore.state;
 wallpaperStore.subscribe((state) => {
   const changed =
     state.layers !== lastPersisted.layers ||

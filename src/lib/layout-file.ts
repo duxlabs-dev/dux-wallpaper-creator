@@ -13,8 +13,16 @@ import {
 } from "./shapes";
 import { camel, lowerFirst, normDeg, round } from "./utils";
 import { clampOpacity } from "./prefs";
+import { isSchemeVariant, isSpecVersion, type SchemeVariant, type SpecVersion } from "./theme";
 
-export interface LayoutFile {
+export interface LayoutColors {
+  dark: boolean;
+  hue: number;
+  scheme: SchemeVariant;
+  spec: SpecVersion;
+}
+
+export interface LayoutFile extends Partial<LayoutColors> {
   layers: Layer[];
   pattern?: PatternId;
   strength?: number;
@@ -26,6 +34,7 @@ export const serializeLayout = (
   canvas: Size,
   pattern: PatternId,
   strength: number,
+  colors?: LayoutColors,
 ) => {
   const minDimension = Math.min(canvas.width, canvas.height);
   const rows = layers.map((layer, index) => {
@@ -49,7 +58,10 @@ export const serializeLayout = (
     return "    " + JSON.stringify(object);
   });
   const layersText = rows.length ? `[\n${rows.join(",\n")}\n  ]` : "[]";
-  return `{\n  "layers": ${layersText},\n  "pattern": ${JSON.stringify(pattern)},\n  "strength": ${round(strength, 2)}\n}\n`;
+  const colorsText = colors
+    ? `,\n  "theme": "${colors.dark ? "dark" : "light"}",\n  "hue": ${round(normDeg(colors.hue), 2)},\n  "scheme": ${JSON.stringify(colors.scheme)},\n  "spec": ${JSON.stringify(colors.spec)}`
+    : "";
+  return `{\n  "layers": ${layersText},\n  "pattern": ${JSON.stringify(pattern)},\n  "strength": ${round(strength, 2)}${colorsText}\n}\n`;
 };
 
 export type ParseResult = { ok: true; layout: LayoutFile } | { ok: false; error: string };
@@ -81,7 +93,15 @@ export const parseLayout = (text: string, canvas: Size): ParseResult => {
   if (!data || typeof data !== "object" || !Array.isArray((data as { layers?: unknown }).layers)) {
     return { ok: false, error: "No layout found in that file." };
   }
-  const file = data as { layers: unknown[]; pattern?: unknown; strength?: unknown };
+  const file = data as {
+    layers: unknown[];
+    pattern?: unknown;
+    strength?: unknown;
+    theme?: unknown;
+    hue?: unknown;
+    scheme?: unknown;
+    spec?: unknown;
+  };
   const minDimension = Math.min(canvas.width, canvas.height);
   const layers: Layer[] = [];
   for (const rawLayer of file.layers) {
@@ -112,6 +132,11 @@ export const parseLayout = (text: string, canvas: Size): ParseResult => {
   if (isPatternId(file.pattern)) layout.pattern = file.pattern;
   if (typeof file.strength === "number" && Number.isFinite(file.strength))
     layout.strength = clampOpacity(file.strength);
+  if (file.theme === "dark" || file.theme === "light") layout.dark = file.theme === "dark";
+  if (typeof file.hue === "number" && Number.isFinite(file.hue))
+    layout.hue = round(normDeg(file.hue), 2);
+  if (isSchemeVariant(file.scheme)) layout.scheme = file.scheme;
+  if (isSpecVersion(file.spec)) layout.spec = file.spec;
   return { ok: true, layout };
 };
 

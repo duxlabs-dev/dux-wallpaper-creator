@@ -41,8 +41,14 @@ export const useExport = () => {
   }, []);
 
   const exportJson = useCallback(() => {
-    const { layers, canvas, prefs } = wallpaperStore.state;
-    const text = serializeLayout(layers, canvas, prefs.pattern, prefs.opacity);
+    const { layers, canvas, prefs, dark } = wallpaperStore.state;
+    const { hue, scheme, spec } = prefs;
+    const text = serializeLayout(layers, canvas, prefs.pattern, prefs.opacity, {
+      dark,
+      hue,
+      scheme,
+      spec,
+    });
     downloadBlob(new Blob([text], { type: "application/json" }), "wallpaper.json");
   }, []);
 
