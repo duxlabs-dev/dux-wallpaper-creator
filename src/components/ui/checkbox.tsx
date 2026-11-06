@@ -15,7 +15,9 @@ export function Checkbox({ label, checked, indeterminate = false, onChange }: Ch
       <input
         type="checkbox"
         aria-label={label}
-        aria-checked={indeterminate ? "mixed" : checked}
+        ref={(input) => {
+          if (input) input.indeterminate = indeterminate;
+        }}
         checked={checked}
         onChange={(event) => onChange(event.currentTarget.checked)}
         className="peer absolute size-5 cursor-pointer opacity-0"
