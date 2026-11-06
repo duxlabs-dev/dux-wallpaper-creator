@@ -626,7 +626,7 @@ export function RandomizeSettings() {
           className="w-full"
         >
           <Shuffle />
-          Randomize selected
+          Randomize
         </Button>
       </div>
     </section>

@@ -14,9 +14,16 @@ const isTabStop = (element: HTMLElement) =>
 export const focusablesOf = (root: HTMLElement): HTMLElement[] =>
   Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(isTabStop);
 
-export const tryFocus = (element: HTMLElement | undefined | null) => {
+// `focusVisible` is missing from TypeScript's DOM types.
+type FocusOptionsWithVisible = FocusOptions & { focusVisible?: boolean };
+
+export const tryFocus = (
+  element: HTMLElement | undefined | null,
+  { focusVisible }: { focusVisible?: boolean } = {},
+) => {
   if (!element) return false;
-  element.focus({ preventScroll: true });
+  const options: FocusOptionsWithVisible = { preventScroll: true, focusVisible };
+  element.focus(options);
   return document.activeElement === element;
 };
 

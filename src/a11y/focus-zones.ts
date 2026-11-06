@@ -29,11 +29,20 @@ export const focusCanvas = (
   return tryFocus(canvasEl());
 };
 
+export const focusSubpage = () => {
+  const bar = sidebarEl();
+  if (!bar) return false;
+  return tryFocus(
+    focusablesOf(bar).find((element) => element.matches("[data-subpage-back]")),
+    { focusVisible: true },
+  );
+};
+
 export const focusSidebar = (edge: "start" | "end" = "start") => {
   const bar = sidebarEl();
   if (!bar) return false;
   const items = focusablesOf(bar);
   const order = edge === "start" ? items : [...items].reverse();
-  for (const target of order) if (tryFocus(target)) return true;
+  for (const target of order) if (tryFocus(target, { focusVisible: true })) return true;
   return false;
 };

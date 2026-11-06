@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-hotkeys";
 import { openShapes } from "@/components/panel/shape-tab";
 import { canvasEl, sidebarEl } from "@/lib/focus-dom";
-import { focusCanvas, focusSidebar, selectAndAnnounce } from "@/a11y/focus-zones";
+import { focusCanvas, focusSidebar, focusSubpage, selectAndAnnounce } from "@/a11y/focus-zones";
 import { PALETTE } from "@/lib/palette";
 import { patternLabel } from "@/lib/patterns";
 import { randomizeWithOptions } from "@/lib/randomize-action";
@@ -117,7 +117,7 @@ const leaveCanvas = (bgMode: boolean) => {
     requestAnimationFrame(() => focusSidebar("start"));
     return;
   }
-  focusSidebar("start");
+  if (!focusSubpage()) focusSidebar("start");
 };
 
 const setPatternStrength = (direction: number, event: KeyboardEvent) => {
@@ -188,8 +188,8 @@ export const useShortcuts = () => {
     }));
   const active = useWallpaper((state) => state.activeId !== null);
 
-  const modal = picking || sheetOpen || dialogOpen;
-  const overlay = modal || exportMenuOpen || randomizeOpen;
+  const modal = sheetOpen || dialogOpen;
+  const overlay = modal || exportMenuOpen;
   const live = !overlay;
   const onCanvas = canvasFocused && live;
   const shapeKeys = live && active && !bgMode;
@@ -205,8 +205,10 @@ export const useShortcuts = () => {
         ignoreInputs: true,
       }),
       bind("I", () => randomizeWithOptions(), { enabled: live }),
-      bind("Shift+I", () => ui.setRandomizeOpen(true), { enabled: live }),
-      bind("Escape", () => ui.setRandomizeOpen(false), { enabled: randomizeOpen }),
+      bind("Shift+I", () => ui.setRandomizeOpen(true), { enabled: live && !randomizeOpen }),
+      bind("Escape", () => ui.setRandomizeOpen(false), {
+        enabled: randomizeOpen && !canvasFocused,
+      }),
       bind("?", () => ui.setShortcutsOpen(true), { enabled: !overlay }),
       bind("F1", () => ui.setShortcutsOpen(true), { enabled: !overlay }),
       bind("F6", () => switchZone("start", canvasFocused), {
@@ -217,7 +219,7 @@ export const useShortcuts = () => {
         enabled: !overlay,
         ignoreInputs: false,
       }),
-      bind("N", () => openShapes("add"), { enabled: !overlay }),
+      bind("N", () => openShapes("add"), { enabled: !overlay && !randomizeOpen && !picking }),
     ],
     { conflictBehavior: "allow" },
   );
@@ -393,7 +395,7 @@ export const useShortcuts = () => {
 
   useHotkeys(
     [
-      bind("Escape", ui.closePicker, { enabled: picking }),
+      bind("Escape", ui.closePicker, { enabled: picking && !canvasFocused }),
       bind("N", ui.closePicker, { enabled: picking }),
       bind("Escape", ui.closeSheet, { enabled: sheetOpen }),
       bind("N", ui.closeSheet, { enabled: sheetOpen }),

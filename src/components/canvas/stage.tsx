@@ -13,7 +13,7 @@ import { keyLabel } from "@/lib/shortcut-keys";
 import { incrementCounter } from "@/lib/storage";
 import { normDeg } from "@/lib/utils";
 import { selectActive, useWallpaper, wallpaper, wallpaperStore } from "@/store/wallpaper";
-import { ui, useUi } from "@/store/ui";
+import { ui } from "@/store/ui";
 import { LayerShape } from "./layer-shape";
 
 interface StageProps {
@@ -27,7 +27,6 @@ const layerIdOf = (target: EventTarget | null) =>
   (target as Element | null)?.closest?.("[data-id]")?.getAttribute("data-id") ?? null;
 
 export function Stage({ scale }: StageProps) {
-  const randomizeOpen = useUi((state) => state.randomizeOpen);
   const { layers, canvas, pattern, patternOpacity, patternScale } = useWallpaper((state) => ({
     layers: state.layers,
     canvas: state.canvas,
@@ -49,7 +48,6 @@ export function Stage({ scale }: StageProps) {
     if (!svg) return;
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
-      if (randomizeOpen) return;
       const activeLayer = selectActive(wallpaperStore.state);
       if (!activeLayer) return;
       const delta = event.deltaY || event.deltaX;
@@ -69,10 +67,9 @@ export function Stage({ scale }: StageProps) {
     };
     svg.addEventListener("wheel", onWheel, { passive: false });
     return () => svg.removeEventListener("wheel", onWheel);
-  }, [randomizeOpen]);
+  }, []);
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
-    if (randomizeOpen) return;
     if (event.button !== 0) return;
     setSnapGuides(NO_GUIDES);
     if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
@@ -124,7 +121,6 @@ export function Stage({ scale }: StageProps) {
   };
 
   const onContextMenu = (event: ReactPointerEvent<SVGSVGElement>) => {
-    if (randomizeOpen) return;
     const id = layerIdOf(event.target);
     if (!id) return;
     event.preventDefault();
@@ -150,11 +146,10 @@ export function Stage({ scale }: StageProps) {
       />
       <svg
         ref={svgRef}
-        aria-disabled={randomizeOpen}
         viewBox={`0 0 ${canvas.width} ${canvas.height}`}
         width={canvas.width}
         height={canvas.height}
-        className={`absolute top-0 left-0 touch-none overflow-visible select-none${randomizeOpen ? " pointer-events-none" : ""}`}
+        className="absolute top-0 left-0 touch-none overflow-visible select-none"
         onPointerDown={onPointerDown}
         onContextMenu={onContextMenu}
       >

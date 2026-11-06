@@ -22,6 +22,7 @@ export function SubpageHeader({
     <header className="flex items-center gap-2 border-b border-outline-variant px-1 pb-2">
       <IconButton
         ref={backRef}
+        data-subpage-back
         label={backLabel}
         aria-keyshortcuts={ariaKeyshortcuts("Escape")}
         onClick={onBack}
