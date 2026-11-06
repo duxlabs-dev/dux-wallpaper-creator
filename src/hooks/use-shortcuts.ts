@@ -204,7 +204,11 @@ export const useShortcuts = () => {
         enabled: !modal,
         ignoreInputs: true,
       }),
-      bind("I", () => randomizeWithOptions(), { enabled: live }),
+      bind(
+        "I",
+        (event) => armable(event, "i", "Randomize? Press I again", () => randomizeWithOptions()),
+        { enabled: live },
+      ),
       bind("Shift+I", () => ui.setRandomizeOpen(true), { enabled: live && !randomizeOpen }),
       bind("Escape", () => ui.setRandomizeOpen(false), {
         enabled: randomizeOpen && !canvasFocused,
