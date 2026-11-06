@@ -147,43 +147,57 @@ export const randomizeLayers = (
 ): { layers: Layer[]; prefs: Prefs; satisfied: boolean } => {
   type Bounds = { left: number; right: number; top: number; bottom: number };
   const boundsCache = new WeakMap<Layer, Bounds>();
-  const extentFactorsFor = (layer: Layer) => {
+  // Edges of the rotated outline relative to the layer center, in units of `size`.
+  const extentFor = (layer: Layer): Bounds => {
+    const outline = isBlob(layer) ? layer.points : SHAPES[layer.shape ?? 0].outline;
     const angle = (layer.rot * Math.PI) / 180;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
-    if (!isBlob(layer) && /circle/i.test(SHAPES[layer.shape ?? 0].name)) return { x: 0.5, y: 0.5 };
-    if (isBlob(layer)) {
-      const rotatedPoints = layer.points.map((point) => {
-        const x = point.x - 0.5;
-        const y = point.y - 0.5;
-        return { x: x * cos - y * sin, y: x * sin + y * cos };
-      });
-      const xs = rotatedPoints.map((point) => point.x);
-      const ys = rotatedPoints.map((point) => point.y);
-      return {
-        x: (Math.max(...xs) - Math.min(...xs)) / 2,
-        y: (Math.max(...ys) - Math.min(...ys)) / 2,
-      };
+    const extent = { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity };
+    for (const point of outline) {
+      const x = point.x - 0.5;
+      const y = point.y - 0.5;
+      const rotatedX = x * cos - y * sin;
+      const rotatedY = x * sin + y * cos;
+      extent.left = Math.min(extent.left, rotatedX);
+      extent.right = Math.max(extent.right, rotatedX);
+      extent.top = Math.min(extent.top, rotatedY);
+      extent.bottom = Math.max(extent.bottom, rotatedY);
     }
-    const extent = (Math.abs(cos) + Math.abs(sin)) / 2;
-    return { x: extent, y: extent };
+    return extent;
   };
   const boundsFor = (layer: Layer) => {
     const cached = boundsCache.get(layer);
     if (cached) return cached;
-    const extent = extentFactorsFor(layer);
-    const halfWidth = layer.size * extent.x;
-    const halfHeight = layer.size * extent.y;
+    const extent = extentFor(layer);
     const centerX = layer.x + layer.size / 2;
     const centerY = layer.y + layer.size / 2;
     const bounds = {
-      left: centerX - halfWidth,
-      right: centerX + halfWidth,
-      top: centerY - halfHeight,
-      bottom: centerY + halfHeight,
+      left: centerX + layer.size * extent.left,
+      right: centerX + layer.size * extent.right,
+      top: centerY + layer.size * extent.top,
+      bottom: centerY + layer.size * extent.bottom,
     };
     boundsCache.set(layer, bounds);
     return bounds;
+  };
+  const withRandomPosition = (layer: Layer): Layer => {
+    const extent = extentFor(layer);
+    const bleed = options.canvasSpill ? (options.bleed / 100) * layer.size : 0;
+    const randomStart = (length: number, low: number, high: number, current: number) => {
+      const min = Math.ceil(-bleed - layer.size * (low + 0.5));
+      const max = Math.floor(length + bleed - layer.size * (high + 0.5));
+      return max >= min ? Math.round(rnd(min, max)) : current;
+    };
+    return {
+      ...layer,
+      x: options.positionX
+        ? randomStart(canvas.width, extent.left, extent.right, layer.x)
+        : layer.x,
+      y: options.positionY
+        ? randomStart(canvas.height, extent.top, extent.bottom, layer.y)
+        : layer.y,
+    };
   };
   const gapFor = (a: Layer, b: Layer) => {
     const boundsA = boundsFor(a);
@@ -285,15 +299,15 @@ export const randomizeLayers = (
       let minSize = (options.sizeMin / 100) * minDimension;
       let maxSize = (options.sizeMax / 100) * minDimension;
       if (!options.canvasSpill) {
-        const extent = extentFactorsFor(layer);
+        const extent = extentFor(layer);
         const centerX = layer.x + layer.size / 2;
         const centerY = layer.y + layer.size / 2;
         const fitWidth = options.positionX
-          ? canvas.width / (2 * extent.x)
-          : Math.min(centerX, canvas.width - centerX) / extent.x;
+          ? canvas.width / (extent.right - extent.left)
+          : Math.min(centerX / -extent.left, (canvas.width - centerX) / extent.right);
         const fitHeight = options.positionY
-          ? canvas.height / (2 * extent.y)
-          : Math.min(centerY, canvas.height - centerY) / extent.y;
+          ? canvas.height / (extent.bottom - extent.top)
+          : Math.min(centerY / -extent.top, (canvas.height - centerY) / extent.bottom);
         maxSize = Math.min(maxSize, Math.max(0, fitWidth), Math.max(0, fitHeight));
         minSize = Math.min(minSize, maxSize);
       }
@@ -312,21 +326,8 @@ export const randomizeLayers = (
           ? Math.max(1, Math.ceil(RANDOMIZE_ATTEMPTS ** (options.spreadStrength / 100)))
           : 1;
       const validCandidates: { layer: Layer; spread: number }[] = [];
-      const extent = extentFactorsFor(layer);
-      const halfWidth = layer.size * extent.x;
-      const halfHeight = layer.size * extent.y;
-      const bleed = options.canvasSpill ? (options.bleed / 100) * layer.size : 0;
-      const randomPosition = (extent: number, halfShape: number, current: number) => {
-        const min = halfShape - layer.size / 2 - bleed;
-        const max = extent - halfShape - layer.size / 2 + bleed;
-        return max >= min ? Math.round(rnd(min, max)) : current;
-      };
       for (let attempt = 0; attempt < RANDOMIZE_ATTEMPTS; attempt += 1) {
-        const candidate = {
-          ...layer,
-          x: options.positionX ? randomPosition(canvas.width, halfWidth, layer.x) : layer.x,
-          y: options.positionY ? randomPosition(canvas.height, halfHeight, layer.y) : layer.y,
-        };
+        const candidate = withRandomPosition(layer);
         const candidateScore = scoreScene([...placed, candidate]);
         const bounds = boundsFor(candidate);
         const candidateSpread = Math.min(
@@ -369,24 +370,11 @@ export const randomizeLayers = (
     for (let pass = 0; pass < 4; pass += 1) {
       for (const index of shuffle(movableIndices)) {
         const layer = placed[index];
-        const extent = extentFactorsFor(layer);
-        const halfWidth = layer.size * extent.x;
-        const halfHeight = layer.size * extent.y;
-        const bleed = options.canvasSpill ? (options.bleed / 100) * layer.size : 0;
-        const randomPosition = (canvasExtent: number, halfShape: number, current: number) => {
-          const min = halfShape - layer.size / 2 - bleed;
-          const max = canvasExtent - halfShape - layer.size / 2 + bleed;
-          return max >= min ? Math.round(rnd(min, max)) : current;
-        };
         let bestCandidate = layer;
         let bestCandidateScore = workingScore;
         let equalCandidate: Layer | undefined;
         for (let attempt = 0; attempt < RANDOMIZE_ATTEMPTS; attempt += 1) {
-          const candidate = {
-            ...layer,
-            x: options.positionX ? randomPosition(canvas.width, halfWidth, layer.x) : layer.x,
-            y: options.positionY ? randomPosition(canvas.height, halfHeight, layer.y) : layer.y,
-          };
+          const candidate = withRandomPosition(layer);
           const candidateScene = [...placed];
           candidateScene[index] = candidate;
           const candidateScore = scoreScene(candidateScene);

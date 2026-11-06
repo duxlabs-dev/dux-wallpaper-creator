@@ -4,13 +4,21 @@ import { BlobLayer, ShapeSpec } from "./layer";
 export interface LibraryShape {
   name: string;
   path: string;
+  outline: readonly Point[];
 }
+
+const OUTLINE_SAMPLES_PER_CURVE = 16;
 
 export const BLOB_MIN_EDGES = 3;
 export const BLOB_MAX_EDGES = 15;
 export const SHAPES: readonly LibraryShape[] = MaterialShapes.all().map((shape) => ({
   name: shape.name,
   path: roundedPolygonToPath(shape.polygon).toSvgPathData(),
+  outline: shape.polygon.cubics.flatMap((cubic) =>
+    Array.from({ length: OUTLINE_SAMPLES_PER_CURVE }, (_, index) =>
+      cubic.pointOnCurve(index / OUTLINE_SAMPLES_PER_CURVE),
+    ),
+  ),
 }));
 
 export const shapeIndex = (name: string, fallback: number) => {
