@@ -2,13 +2,21 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { IconButton } from "@/components/ui/icon-button";
+import { type Range } from "@/components/ui/range-slider";
+import { RangeSliderField } from "@/components/ui/range-slider-field";
 import { SliderField } from "@/components/ui/slider-field";
 import { SubpageHeader } from "@/components/ui/subpage-header";
 import { Switch as OptionSwitch } from "@/components/ui/switch";
 import { focusCanvas } from "@/a11y/focus-zones";
-import { BLOB_MAX_EDGES, BLOB_MIN_EDGES, SMOOTHNESS } from "@/lib/shapes";
-import { PATTERN_OPACITY, PATTERN_SCALE } from "@/lib/patterns";
-import type { RandomizeOptions } from "@/lib/randomize";
+import {
+  RANDOMIZE_LIMITS,
+  SIZE_MAX_WITHOUT_SPILL,
+  type RandomizeOptions,
+  type RangeKey,
+  type RangeToggle,
+  type Toggle,
+  type ToggleKey,
+} from "@/lib/randomize";
 import { loadRandomizeOptions, persistRandomizeOptions } from "@/lib/storage";
 import { randomizeWithOptions } from "@/lib/randomize-action";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
@@ -32,8 +40,6 @@ import {
   RotateRight,
   ScatterPlot,
   Shapes,
-  Speed,
-  SpeedTwo,
   Shuffle,
   SwapHoriz,
   SwapVert,
@@ -63,13 +69,13 @@ const SELECT_ALL_RANDOMIZE_KEYS = [
   "layerOrder",
   "allowOverlap",
   "canvasSpill",
-] as const satisfies readonly (keyof RandomizeOptions)[];
+] as const satisfies readonly ToggleKey[];
 
 const SWITCH_KEYS = [
   ...SELECT_ALL_RANDOMIZE_KEYS,
   "minimumGap",
   "limitOverlapCount",
-] as const satisfies readonly (keyof RandomizeOptions)[];
+] as const satisfies readonly ToggleKey[];
 
 export function RandomizeButton({ mini }: { mini: boolean }) {
   const open = useUi((state) => state.randomizeOpen);
@@ -95,7 +101,7 @@ export function RandomizeSettings() {
   const backButton = useRef<HTMLButtonElement>(null);
   const open = useUi((state) => state.randomizeOpen);
   const wasOpen = useRef(open);
-  const enabledCount = SELECT_ALL_RANDOMIZE_KEYS.filter((key) => options[key]).length;
+  const enabledCount = SELECT_ALL_RANDOMIZE_KEYS.filter((key) => options[key].enabled).length;
   const allEnabled = enabledCount === SELECT_ALL_RANDOMIZE_KEYS.length;
   const someEnabled = enabledCount > 0 && !allEnabled;
 
@@ -107,26 +113,37 @@ export function RandomizeSettings() {
 
   useEffect(() => persistRandomizeOptions(options), [options]);
 
-  const setOption = <K extends keyof RandomizeOptions>(key: K, value: RandomizeOptions[K]) =>
-    setOptions((current) => ({ ...current, [key]: value }));
+  const patch = <K extends ToggleKey>(key: K, changes: Partial<RandomizeOptions[K]>) =>
+    setOptions((current) => ({ ...current, [key]: { ...current[key], ...changes } }));
+
+  const switchProps = (key: ToggleKey) => ({
+    checked: options[key].enabled,
+    onChange: (enabled: boolean) => patch(key, { enabled }),
+  });
+
+  const rangeProps = (key: RangeKey) => ({
+    ...RANDOMIZE_LIMITS[key],
+    value: [options[key].min, options[key].max] as Range,
+    onChange: ([min, max]: Range) => patch(key, { min, max }),
+  });
+
+  const capSizeWithoutSpill = (size: RangeToggle) => ({
+    ...size,
+    min: Math.min(size.min, SIZE_MAX_WITHOUT_SPILL),
+    max: Math.min(size.max, SIZE_MAX_WITHOUT_SPILL),
+  });
 
   const setAllSwitches = (value: boolean) =>
     setOptions((current) => {
       const next = { ...current };
-      if (value) {
-        for (const key of SWITCH_KEYS) next[key] = false;
-        for (const key of SELECT_ALL_RANDOMIZE_KEYS) next[key] = true;
-      } else {
-        for (const key of SWITCH_KEYS) next[key] = false;
-        next.sizeMin = Math.min(next.sizeMin, 100);
-        next.sizeMax = Math.min(next.sizeMax, 100);
-      }
+      for (const key of SWITCH_KEYS)
+        (next as Record<ToggleKey, Toggle>)[key] = {
+          ...next[key],
+          enabled: value && (SELECT_ALL_RANDOMIZE_KEYS as readonly ToggleKey[]).includes(key),
+        };
+      if (!next.canvasSpill.enabled) next.size = capSizeWithoutSpill(next.size);
       return next;
     });
-
-  const randomize = () => {
-    randomizeWithOptions(options);
-  };
 
   return (
     <section
@@ -154,23 +171,16 @@ export function RandomizeSettings() {
               <OptionSwitch
                 id="randomize-shape-count"
                 label="Shape count"
-                checked={options.shapeCount}
                 icon={<Numbers />}
-                onChange={(value) => setOption("shapeCount", value)}
+                {...switchProps("shapeCount")}
               />
-              {options.shapeCount && (
+              {options.shapeCount.enabled && (
                 <NestedControls>
-                  <RangeFields
-                    prefix="shape-count"
+                  <RangeSliderField
+                    id="randomize-shape-count-range"
+                    icon={<ArrowRange />}
                     label="Shape count"
-                    minValue={options.countMin}
-                    maxValue={options.countMax}
-                    min={0}
-                    max={40}
-                    step={1}
-                    display=""
-                    setMin={(value) => setOption("countMin", value)}
-                    setMax={(value) => setOption("countMax", value)}
+                    {...rangeProps("shapeCount")}
                   />
                 </NestedControls>
               )}
@@ -178,52 +188,47 @@ export function RandomizeSettings() {
             <OptionSwitch
               id="randomize-position-x"
               label="Horizontal position"
-              checked={options.positionX}
               icon={<SwapHoriz />}
               tooltip="Randomizes each layer’s horizontal offset within the canvas."
-              onChange={(value) => setOption("positionX", value)}
+              {...switchProps("positionX")}
             />
             <OptionSwitch
               id="randomize-position-y"
               label="Vertical position"
-              checked={options.positionY}
               icon={<SwapVert />}
               tooltip="Randomizes each layer’s vertical offset within the canvas."
-              onChange={(value) => setOption("positionY", value)}
+              {...switchProps("positionY")}
             />
             <SliderField
               id="randomize-spread-strength"
               icon={<ScatterPlot />}
               label="Spread strength"
+              {...RANDOMIZE_LIMITS.spreadStrength}
               value={options.spreadStrength}
-              min={0}
-              max={100}
-              step={5}
               display={`${options.spreadStrength}%`}
               tooltip="Controls how dispersed the shapes spread across the canvas."
-              onChange={(value) => setOption("spreadStrength", value)}
+              onChange={(spreadStrength) =>
+                setOptions((current) => ({ ...current, spreadStrength }))
+              }
             />
             <div className="flex flex-col gap-2">
               <OptionSwitch
                 id="randomize-min-gap"
                 label="Keep a minimum gap"
-                checked={options.minimumGap}
                 icon={<Distance />}
                 tooltip="Keeps shapes separated by a minimum distance to avoid overlap and crowding."
-                onChange={(value) => setOption("minimumGap", value)}
+                {...switchProps("minimumGap")}
               />
-              {options.minimumGap && (
+              {options.minimumGap.enabled && (
                 <NestedControls>
                   <SliderField
                     id="randomize-gap"
                     icon={<Distance />}
                     label="Minimum gap"
-                    value={options.gap}
-                    min={0}
-                    max={400}
-                    step={8}
-                    display={`${options.gap} px`}
-                    onChange={(value) => setOption("gap", value)}
+                    {...RANDOMIZE_LIMITS.minimumGap}
+                    value={options.minimumGap.gap}
+                    display={`${options.minimumGap.gap} px`}
+                    onChange={(gap) => patch("minimumGap", { gap })}
                   />
                 </NestedControls>
               )}
@@ -232,43 +237,20 @@ export function RandomizeSettings() {
               <OptionSwitch
                 id="randomize-overlap"
                 label="Allow overlap"
-                checked={options.allowOverlap}
                 icon={<Layers />}
                 tooltip="Allows shapes to overlap instead of staying separate."
-                onChange={(value) => setOption("allowOverlap", value)}
+                {...switchProps("allowOverlap")}
               />
-              {options.allowOverlap && (
+              {options.allowOverlap.enabled && (
                 <NestedControls>
-                  <>
-                    <SliderField
-                      id="randomize-overlap-min"
-                      icon={<Layers />}
-                      label="Minimum overlap depth"
-                      value={options.overlapMin}
-                      min={0}
-                      max={100}
-                      step={1}
-                      display={`${options.overlapMin}%`}
-                      tooltip="Only applies to shapes that overlap; it does not force overlap."
-                      onChange={(value) =>
-                        setOption("overlapMin", Math.min(value, options.overlapMax))
-                      }
-                    />
-                    <SliderField
-                      id="randomize-overlap-max"
-                      icon={<Layers />}
-                      label="Maximum overlap"
-                      value={options.overlapMax}
-                      min={0}
-                      max={100}
-                      step={1}
-                      display={`${options.overlapMax}%`}
-                      tooltip="Caps how much one shape can overlap another."
-                      onChange={(value) =>
-                        setOption("overlapMax", Math.max(value, options.overlapMin))
-                      }
-                    />
-                  </>
+                  <RangeSliderField
+                    id="randomize-overlap-depth"
+                    icon={<Layers />}
+                    label="Overlap depth"
+                    format={(value) => `${value}%`}
+                    tooltip="How deep overlapping shapes may overlap, in % of the smaller one. It doesn’t force shapes to overlap."
+                    {...rangeProps("allowOverlap")}
+                  />
                 </NestedControls>
               )}
             </div>
@@ -276,32 +258,23 @@ export function RandomizeSettings() {
               <OptionSwitch
                 id="randomize-overlap-count"
                 label="Limit overlapping neighbors"
-                checked={options.limitOverlapCount}
                 icon={<FilterAlt />}
                 tooltip="Caps how many neighboring shapes can overlap each layer."
-                onChange={(value) => setOption("limitOverlapCount", value)}
+                {...switchProps("limitOverlapCount")}
               />
-              {options.limitOverlapCount && (
+              {options.limitOverlapCount.enabled && (
                 <NestedControls>
-                  <>
-                    <RangeFields
-                      prefix="overlap-count"
-                      label="Overlapping neighbors"
-                      minValue={options.minOverlapCount}
-                      maxValue={options.maxOverlapCount}
-                      min={0}
-                      max={40}
-                      step={1}
-                      display=""
-                      setMin={(value) => setOption("minOverlapCount", value)}
-                      setMax={(value) => setOption("maxOverlapCount", value)}
-                    />
-                    {!options.allowOverlap && options.minOverlapCount > 0 && (
-                      <p role="status" className="m-0 text-xs text-on-surface-variant">
-                        Minimum neighbors requires overlap; no-overlap takes priority.
-                      </p>
-                    )}
-                  </>
+                  <RangeSliderField
+                    id="randomize-overlap-count-range"
+                    icon={<ArrowRange />}
+                    label="Overlapping neighbors"
+                    {...rangeProps("limitOverlapCount")}
+                  />
+                  {!options.allowOverlap.enabled && options.limitOverlapCount.min > 0 && (
+                    <p role="status" className="m-0 text-xs text-on-surface-variant">
+                      Minimum neighbors requires overlap; no-overlap takes priority.
+                    </p>
+                  )}
                 </NestedControls>
               )}
             </div>
@@ -309,34 +282,27 @@ export function RandomizeSettings() {
               <OptionSwitch
                 id="randomize-spill"
                 label="Allow shapes beyond canvas"
-                checked={options.canvasSpill}
                 icon={<OpenInFull />}
                 tooltip="Lets shapes extend outside the canvas instead of staying fully within bounds."
-                onChange={(value) =>
+                checked={options.canvasSpill.enabled}
+                onChange={(enabled) =>
                   setOptions((current) => ({
                     ...current,
-                    canvasSpill: value,
-                    ...(!value
-                      ? {
-                          sizeMin: Math.min(current.sizeMin, 100),
-                          sizeMax: Math.min(current.sizeMax, 100),
-                        }
-                      : {}),
+                    canvasSpill: { ...current.canvasSpill, enabled },
+                    size: enabled ? current.size : capSizeWithoutSpill(current.size),
                   }))
                 }
               />
-              {options.canvasSpill && (
+              {options.canvasSpill.enabled && (
                 <NestedControls>
                   <SliderField
                     id="randomize-bleed"
                     icon={<OpenInFull />}
                     label="Canvas spill"
-                    value={options.bleed}
-                    min={0}
-                    max={100}
-                    step={5}
-                    display={`${options.bleed}%`}
-                    onChange={(value) => setOption("bleed", value)}
+                    {...RANDOMIZE_LIMITS.canvasSpill}
+                    value={options.canvasSpill.bleed}
+                    display={`${options.canvasSpill.bleed}%`}
+                    onChange={(bleed) => patch("canvasSpill", { bleed })}
                   />
                 </NestedControls>
               )}
@@ -346,144 +312,115 @@ export function RandomizeSettings() {
             <OptionSwitch
               id="randomize-shape-type"
               label="Shape or blob type"
-              checked={options.shapeType}
               icon={<Shapes />}
               tooltip="Switches some layers between regular shapes and blob forms."
-              onChange={(value) => setOption("shapeType", value)}
+              {...switchProps("shapeType")}
             />
             <OptionSwitch
               id="randomize-shape-index"
               label="Randomize shape"
-              checked={options.shapeIndex}
               icon={<Shapes />}
               tooltip="Chooses a different shape variant for each layer."
-              onChange={(value) => setOption("shapeIndex", value)}
+              {...switchProps("shapeIndex")}
             />
             <OptionSwitch
               id="randomize-blob-contour"
               label="Randomize blob shape"
-              checked={options.blobContour}
               icon={<Gesture />}
               tooltip="Randomizes the blob silhouette instead of keeping the same contour."
-              onChange={(value) => setOption("blobContour", value)}
+              {...switchProps("blobContour")}
             />
             <OptionSwitch
               id="randomize-blob-edges"
               label="Blob edge count"
-              checked={options.blobEdges}
               icon={<Numbers />}
               tooltip="Changes how many edges the blob uses."
-              onChange={(value) => setOption("blobEdges", value)}
+              {...switchProps("blobEdges")}
             />
-            {options.blobEdges && (
+            {options.blobEdges.enabled && (
               <NestedControls>
-                <RangeFields
-                  prefix="blob-edges"
+                <RangeSliderField
+                  id="randomize-blob-edges-range"
+                  icon={<ArrowRange />}
                   label="Blob edge count"
-                  minValue={options.blobEdgesMin}
-                  maxValue={options.blobEdgesMax}
-                  min={BLOB_MIN_EDGES}
-                  max={BLOB_MAX_EDGES}
-                  step={1}
-                  display=""
-                  setMin={(value) => setOption("blobEdgesMin", value)}
-                  setMax={(value) => setOption("blobEdgesMax", value)}
+                  {...rangeProps("blobEdges")}
                 />
               </NestedControls>
             )}
             <OptionSwitch
               id="randomize-blob-smoothness"
               label="Blob smoothness"
-              checked={options.blobSmoothness}
               icon={<LineCurve />}
               tooltip="Adjusts how round or faceted the blob edges appear."
-              onChange={(value) => setOption("blobSmoothness", value)}
+              {...switchProps("blobSmoothness")}
             />
-            {options.blobSmoothness && (
+            {options.blobSmoothness.enabled && (
               <NestedControls>
-                <RangeFields
-                  prefix="blob-smoothness"
+                <RangeSliderField
+                  id="randomize-blob-smoothness-range"
+                  icon={<ArrowRange />}
                   label="Blob smoothness"
-                  minValue={options.blobSmoothnessMin}
-                  maxValue={options.blobSmoothnessMax}
-                  min={0}
-                  max={SMOOTHNESS.length - 1}
-                  step={1}
-                  display=" step"
-                  formatValue={(value) => `${value}${value === 1 ? " step" : " steps"}`}
-                  setMin={(value) => setOption("blobSmoothnessMin", value)}
-                  setMax={(value) => setOption("blobSmoothnessMax", value)}
+                  format={(value) => `${value} ${value === 1 ? "step" : "steps"}`}
+                  {...rangeProps("blobSmoothness")}
                 />
               </NestedControls>
             )}
             <OptionSwitch
               id="randomize-size"
               label="Shape size"
-              checked={options.size}
               icon={<ZoomOutMap />}
               tooltip="Randomizes the size range for each layer."
-              onChange={(value) => setOption("size", value)}
+              {...switchProps("size")}
             />
-            {options.size && (
+            {options.size.enabled && (
               <NestedControls>
-                <RangeFields
-                  prefix="size"
+                <RangeSliderField
+                  id="randomize-size-range"
+                  icon={<ArrowRange />}
                   label="Shape size"
-                  minValue={options.sizeMin}
-                  maxValue={options.sizeMax}
-                  min={5}
-                  max={options.canvasSpill ? 200 : 100}
-                  step={5}
-                  display="%"
-                  setMin={(value) => setOption("sizeMin", value)}
-                  setMax={(value) => setOption("sizeMax", value)}
+                  format={(value) => `${value}%`}
+                  {...rangeProps("size")}
+                  max={
+                    options.canvasSpill.enabled ? RANDOMIZE_LIMITS.size.max : SIZE_MAX_WITHOUT_SPILL
+                  }
                 />
               </NestedControls>
             )}
             <OptionSwitch
               id="randomize-rotation"
               label="Rotation"
-              checked={options.rotation}
               icon={<RotateRight />}
               tooltip="Randomizes each layer’s rotation angle."
-              onChange={(value) => setOption("rotation", value)}
+              {...switchProps("rotation")}
             />
-            {options.rotation && (
+            {options.rotation.enabled && (
               <NestedControls>
                 <SliderField
                   id="randomize-rotation-range"
                   icon={<ArrowRange />}
                   label="Rotation range"
-                  value={options.rotationRange}
-                  min={0}
-                  max={180}
-                  step={15}
-                  display={`±${options.rotationRange}°`}
-                  onChange={(value) => setOption("rotationRange", value)}
+                  {...RANDOMIZE_LIMITS.rotation}
+                  value={options.rotation.range}
+                  display={`±${options.rotation.range}°`}
+                  onChange={(range) => patch("rotation", { range })}
                 />
               </NestedControls>
             )}
             <OptionSwitch
               id="randomize-opacity"
               label="Shape opacity"
-              checked={options.opacity}
               icon={<Opacity />}
               tooltip="Randomizes each layer’s transparency."
-              onChange={(value) => setOption("opacity", value)}
+              {...switchProps("opacity")}
             />
-            {options.opacity && (
+            {options.opacity.enabled && (
               <NestedControls>
-                <RangeFields
-                  prefix="opacity"
+                <RangeSliderField
+                  id="randomize-opacity-range"
+                  icon={<ArrowRange />}
                   label="Shape opacity"
-                  minValue={options.opacityMin}
-                  maxValue={options.opacityMax}
-                  min={5}
-                  max={100}
-                  step={5}
-                  display="%"
-                  setMin={(value) => setOption("opacityMin", value)}
-                  setMax={(value) => setOption("opacityMax", value)}
+                  format={(value) => `${value}%`}
+                  {...rangeProps("opacity")}
                 />
               </NestedControls>
             )}
@@ -492,98 +429,79 @@ export function RandomizeSettings() {
             <OptionSwitch
               id="randomize-hue"
               label="Hue"
-              checked={options.hue}
               icon={<FormatColorFill />}
               tooltip="Shifts the hue of all colors by a random amount within the range."
-              onChange={(value) => setOption("hue", value)}
+              {...switchProps("hue")}
             />
-            {options.hue && (
+            {options.hue.enabled && (
               <NestedControls>
                 <SliderField
                   id="randomize-hue-range"
                   icon={<ArrowRange />}
                   label="Hue variation"
-                  value={options.hueRange}
-                  min={0}
-                  max={180}
-                  step={5}
-                  display={`±${options.hueRange}°`}
-                  onChange={(value) => setOption("hueRange", value)}
+                  {...RANDOMIZE_LIMITS.hue}
+                  value={options.hue.range}
+                  display={`±${options.hue.range}°`}
+                  onChange={(range) => patch("hue", { range })}
                 />
               </NestedControls>
             )}
             <OptionSwitch
               id="randomize-fill"
               label="Fill color"
-              checked={options.fill}
               icon={<FormatColorFill />}
               tooltip="Randomizes which fill color each shape uses."
-              onChange={(value) => setOption("fill", value)}
+              {...switchProps("fill")}
             />
             <OptionSwitch
               id="randomize-overlap-color"
               label="Overlap color"
-              checked={options.overlapColor}
               icon={<Palette />}
               tooltip="Randomizes the color used where layers overlap."
-              onChange={(value) => setOption("overlapColor", value)}
+              {...switchProps("overlapColor")}
             />
           </OptionGroup>
           <OptionGroup title="Background" icon={<Tune />}>
             <OptionSwitch
               id="randomize-pattern"
               label="Pattern selection"
-              checked={options.pattern}
               icon={<Pattern />}
               tooltip="Chooses a different background pattern at random."
-              onChange={(value) => setOption("pattern", value)}
+              {...switchProps("pattern")}
             />
             <OptionSwitch
               id="randomize-pattern-opacity"
               label="Pattern opacity"
-              checked={options.patternOpacity}
               icon={<Opacity />}
               tooltip="Randomizes how visible the background pattern is."
-              onChange={(value) => setOption("patternOpacity", value)}
+              {...switchProps("patternOpacity")}
             />
-            {options.patternOpacity && (
+            {options.patternOpacity.enabled && (
               <NestedControls>
-                <RangeFields
-                  prefix="pattern-opacity"
+                <RangeSliderField
+                  id="randomize-pattern-opacity-range"
+                  icon={<ArrowRange />}
                   label="Pattern opacity"
-                  minValue={options.patternOpacityMin}
-                  maxValue={options.patternOpacityMax}
-                  min={PATTERN_OPACITY.min}
-                  max={PATTERN_OPACITY.max}
-                  step={0.02}
-                  display="%"
-                  displayFactor={100}
-                  setMin={(value) => setOption("patternOpacityMin", value)}
-                  setMax={(value) => setOption("patternOpacityMax", value)}
+                  format={(value) => `${Math.round(value * 100)}%`}
+                  {...rangeProps("patternOpacity")}
                 />
               </NestedControls>
             )}
             <OptionSwitch
               id="randomize-pattern-scale"
               label="Pattern scale"
-              checked={options.patternScale}
               icon={<ZoomOutMap />}
               tooltip="Randomizes the size of the background pattern tiles."
-              onChange={(value) => setOption("patternScale", value)}
+              {...switchProps("patternScale")}
             />
-            {options.patternScale && (
+            {options.patternScale.enabled && (
               <NestedControls>
-                <RangeFields
-                  prefix="pattern-scale"
+                <RangeSliderField
+                  id="randomize-pattern-scale-range"
+                  icon={<ArrowRange />}
                   label="Pattern scale"
-                  minValue={options.patternScaleMin}
-                  maxValue={options.patternScaleMax}
-                  min={PATTERN_SCALE.min}
-                  max={PATTERN_SCALE.max}
-                  step={0.1}
-                  display="×"
-                  setMin={(value) => setOption("patternScaleMin", value)}
-                  setMax={(value) => setOption("patternScaleMax", value)}
+                  format={(value) => `${+value.toFixed(1)}×`}
+                  {...rangeProps("patternScale")}
                 />
               </NestedControls>
             )}
@@ -592,10 +510,9 @@ export function RandomizeSettings() {
             <OptionSwitch
               id="randomize-layer-order"
               label="Shuffle stacking order"
-              checked={options.layerOrder}
               icon={<Layers />}
               tooltip="Randomizes which layers appear on top of others."
-              onChange={(value) => setOption("layerOrder", value)}
+              {...switchProps("layerOrder")}
             />
           </OptionGroup>
         </div>
@@ -605,13 +522,13 @@ export function RandomizeSettings() {
           variant="filled"
           disabled={
             !count &&
-            !options.shapeCount &&
-            !options.hue &&
-            !options.pattern &&
-            !options.patternOpacity &&
-            !options.patternScale
+            !options.shapeCount.enabled &&
+            !options.hue.enabled &&
+            !options.pattern.enabled &&
+            !options.patternOpacity.enabled &&
+            !options.patternScale.enabled
           }
-          onClick={randomize}
+          onClick={() => randomizeWithOptions(options)}
           className="w-full"
         >
           <Shuffle />
@@ -656,61 +573,4 @@ function OptionGroup({
 
 function NestedControls({ children }: { children: ReactNode }) {
   return <div className="border-l border-outline-variant pl-3">{children}</div>;
-}
-
-function RangeFields({
-  prefix,
-  label,
-  minValue,
-  maxValue,
-  min,
-  max,
-  step,
-  display,
-  displayFactor = 1,
-  formatValue,
-  setMin,
-  setMax,
-}: {
-  prefix: string;
-  label: string;
-  minValue: number;
-  maxValue: number;
-  min: number;
-  max: number;
-  step: number;
-  display: string;
-  displayFactor?: number;
-  formatValue?: (value: number) => string;
-  setMin: (value: number) => void;
-  setMax: (value: number) => void;
-}) {
-  const formatted = (value: number) =>
-    formatValue?.(value) ?? `${+(value * displayFactor).toFixed(2)}${display}`;
-  return (
-    <>
-      <SliderField
-        id={`${prefix}-min`}
-        icon={<SpeedTwo />}
-        label={`Minimum ${label.toLowerCase()}`}
-        value={minValue}
-        min={min}
-        max={max}
-        step={step}
-        display={formatted(minValue)}
-        onChange={(value) => setMin(Math.min(value, maxValue))}
-      />
-      <SliderField
-        id={`${prefix}-max`}
-        icon={<Speed />}
-        label={`Maximum ${label.toLowerCase()}`}
-        value={maxValue}
-        min={min}
-        max={max}
-        step={step}
-        display={formatted(maxValue)}
-        onChange={(value) => setMax(Math.max(value, minValue))}
-      />
-    </>
-  );
 }

@@ -17,100 +17,102 @@ import {
 import type { Size } from "@/lib/formats";
 import { normDeg, pickRandom, rnd, shuffle } from "@/lib/utils";
 
-export interface RandomizeOptions {
-  positionX: boolean;
-  positionY: boolean;
-  shapeCount: boolean;
-  shapeType: boolean;
-  shapeIndex: boolean;
-  blobContour: boolean;
-  blobEdges: boolean;
-  blobSmoothness: boolean;
-  size: boolean;
-  rotation: boolean;
-  opacity: boolean;
-  fill: boolean;
-  overlapColor: boolean;
-  hue: boolean;
-  pattern: boolean;
-  patternOpacity: boolean;
-  patternScale: boolean;
-  layerOrder: boolean;
-  minimumGap: boolean;
-  allowOverlap: boolean;
-  limitOverlapCount: boolean;
-  canvasSpill: boolean;
-  sizeMin: number;
-  sizeMax: number;
-  countMin: number;
-  countMax: number;
-  rotationRange: number;
-  opacityMin: number;
-  opacityMax: number;
-  blobEdgesMin: number;
-  blobEdgesMax: number;
-  blobSmoothnessMin: number;
-  blobSmoothnessMax: number;
-  hueRange: number;
-  patternOpacityMin: number;
-  patternOpacityMax: number;
-  patternScaleMin: number;
-  patternScaleMax: number;
-  spreadStrength: number;
-  gap: number;
-  overlapMin: number;
-  overlapMax: number;
-  minOverlapCount: number;
-  maxOverlapCount: number;
-  bleed: number;
+export interface Toggle {
+  enabled: boolean;
+}
+export interface RangeToggle extends Toggle {
+  min: number;
+  max: number;
 }
 
+export interface RandomizeOptions {
+  shapeCount: RangeToggle;
+  positionX: Toggle;
+  positionY: Toggle;
+  spreadStrength: number;
+  minimumGap: Toggle & { gap: number };
+  /** Overlap depth in % of the smaller shape. */
+  allowOverlap: RangeToggle;
+  limitOverlapCount: RangeToggle;
+  /** How far a shape may stick out, in % of its size. */
+  canvasSpill: Toggle & { bleed: number };
+  shapeType: Toggle;
+  shapeIndex: Toggle;
+  blobContour: Toggle;
+  blobEdges: RangeToggle;
+  blobSmoothness: RangeToggle;
+  /** Size in % of the shorter canvas side. */
+  size: RangeToggle;
+  rotation: Toggle & { range: number };
+  opacity: RangeToggle;
+  fill: Toggle;
+  overlapColor: Toggle;
+  hue: Toggle & { range: number };
+  pattern: Toggle;
+  patternOpacity: RangeToggle;
+  patternScale: RangeToggle;
+  layerOrder: Toggle;
+}
+
+export type ToggleKey = {
+  [K in keyof RandomizeOptions]: RandomizeOptions[K] extends Toggle ? K : never;
+}[keyof RandomizeOptions];
+
+export type RangeKey = {
+  [K in keyof RandomizeOptions]: RandomizeOptions[K] extends RangeToggle ? K : never;
+}[keyof RandomizeOptions];
+
+export interface Limit {
+  min: number;
+  max: number;
+  step: number;
+}
+
+// Slider limits for every numeric setting, also used to sanitize saved options.
+export const RANDOMIZE_LIMITS = {
+  shapeCount: { min: 0, max: 40, step: 1 },
+  spreadStrength: { min: 0, max: 100, step: 5 },
+  minimumGap: { min: 0, max: 400, step: 8 },
+  allowOverlap: { min: 0, max: 100, step: 1 },
+  limitOverlapCount: { min: 0, max: 40, step: 1 },
+  canvasSpill: { min: 0, max: 100, step: 5 },
+  blobEdges: { min: BLOB_MIN_EDGES, max: BLOB_MAX_EDGES, step: 1 },
+  blobSmoothness: { min: 0, max: SMOOTHNESS.length - 1, step: 1 },
+  // Above 100% only fits when shapes may spill over the canvas.
+  size: { min: 5, max: 200, step: 5 },
+  rotation: { min: 0, max: 180, step: 15 },
+  opacity: { min: 5, max: 100, step: 5 },
+  hue: { min: 0, max: 180, step: 5 },
+  patternOpacity: { ...PATTERN_OPACITY, step: 0.02 },
+  patternScale: { ...PATTERN_SCALE, step: 0.1 },
+} satisfies Partial<Record<keyof RandomizeOptions, Limit>>;
+
+export const SIZE_MAX_WITHOUT_SPILL = 100;
+
 export const DEFAULT_RANDOMIZE_OPTIONS: RandomizeOptions = {
-  positionX: true,
-  positionY: true,
-  shapeCount: true,
-  shapeType: false,
-  shapeIndex: true,
-  blobContour: true,
-  blobEdges: false,
-  blobSmoothness: false,
-  size: true,
-  rotation: true,
-  opacity: false,
-  fill: true,
-  overlapColor: true,
-  hue: true,
-  pattern: true,
-  patternOpacity: false,
-  patternScale: false,
-  layerOrder: false,
-  minimumGap: false,
-  allowOverlap: true,
-  limitOverlapCount: false,
-  canvasSpill: false,
-  sizeMin: 15,
-  sizeMax: 80,
-  countMin: 3,
-  countMax: 12,
-  rotationRange: 180,
-  opacityMin: 15,
-  opacityMax: 100,
-  blobEdgesMin: BLOB_MIN_EDGES,
-  blobEdgesMax: BLOB_MAX_EDGES,
-  blobSmoothnessMin: 0,
-  blobSmoothnessMax: SMOOTHNESS.length - 1,
-  hueRange: 180,
-  patternOpacityMin: PATTERN_OPACITY.min,
-  patternOpacityMax: PATTERN_OPACITY.max,
-  patternScaleMin: PATTERN_SCALE.min,
-  patternScaleMax: PATTERN_SCALE.max,
+  shapeCount: { enabled: true, min: 3, max: 12 },
+  positionX: { enabled: true },
+  positionY: { enabled: true },
   spreadStrength: 0,
-  gap: 48,
-  overlapMin: 0,
-  overlapMax: 100,
-  minOverlapCount: 0,
-  maxOverlapCount: 4,
-  bleed: 35,
+  minimumGap: { enabled: false, gap: 48 },
+  allowOverlap: { enabled: true, min: 0, max: 100 },
+  limitOverlapCount: { enabled: false, min: 0, max: 4 },
+  canvasSpill: { enabled: false, bleed: 35 },
+  shapeType: { enabled: false },
+  shapeIndex: { enabled: true },
+  blobContour: { enabled: true },
+  blobEdges: { enabled: false, min: BLOB_MIN_EDGES, max: BLOB_MAX_EDGES },
+  blobSmoothness: { enabled: false, min: 0, max: SMOOTHNESS.length - 1 },
+  size: { enabled: true, min: 15, max: 80 },
+  rotation: { enabled: true, range: 180 },
+  opacity: { enabled: false, min: 15, max: 100 },
+  fill: { enabled: true },
+  overlapColor: { enabled: true },
+  hue: { enabled: true, range: 180 },
+  pattern: { enabled: true },
+  patternOpacity: { enabled: false, min: PATTERN_OPACITY.min, max: PATTERN_OPACITY.max },
+  patternScale: { enabled: false, min: PATTERN_SCALE.min, max: PATTERN_SCALE.max },
+  layerOrder: { enabled: false },
 };
 
 // Random positions tried per shape before settling for the best one found.
@@ -204,7 +206,7 @@ export const randomizeLayers = (
   // canvas (plus the allowed spill). Positions are rounded inward so they never stick out.
   const withRandomPosition = (layer: Layer): Layer => {
     const extent = extentFor(layer);
-    const bleed = options.canvasSpill ? (options.bleed / 100) * layer.size : 0;
+    const bleed = options.canvasSpill.enabled ? (options.canvasSpill.bleed / 100) * layer.size : 0;
     const randomStart = (length: number, low: number, high: number, current: number) => {
       const min = Math.ceil(-bleed - layer.size * (low + 0.5));
       const max = Math.floor(length + bleed - layer.size * (high + 0.5));
@@ -212,10 +214,10 @@ export const randomizeLayers = (
     };
     const candidate = {
       ...layer,
-      x: options.positionX
+      x: options.positionX.enabled
         ? randomStart(canvas.width, extent.left, extent.right, layer.x)
         : layer.x,
-      y: options.positionY
+      y: options.positionY.enabled
         ? randomStart(canvas.height, extent.top, extent.bottom, layer.y)
         : layer.y,
     };
@@ -240,7 +242,7 @@ export const randomizeLayers = (
     for (let index = 0; index < scene.length; index += 1) {
       const layer = scene[index];
       const layerBounds = bounds[index];
-      if (!options.canvasSpill) {
+      if (!options.canvasSpill.enabled) {
         hard += Math.max(0, -layerBounds.left) + Math.max(0, layerBounds.right - canvas.width);
         hard += Math.max(0, -layerBounds.top) + Math.max(0, layerBounds.bottom - canvas.height);
       }
@@ -260,24 +262,24 @@ export const randomizeLayers = (
           overlapCounts[index] += 1;
           overlapCounts[otherIndex] += 1;
         }
-        if (overlap > 0 && !options.allowOverlap) hard += overlap;
-        if (options.allowOverlap && overlap > 0) {
+        if (overlap > 0 && !options.allowOverlap.enabled) hard += overlap;
+        if (options.allowOverlap.enabled && overlap > 0) {
           const smallerSize = Math.min(layer.size, other.size);
-          const minimumOverlap = (smallerSize * options.overlapMin) / 100;
-          const maximumOverlap = (smallerSize * options.overlapMax) / 100;
+          const minimumOverlap = (smallerSize * options.allowOverlap.min) / 100;
+          const maximumOverlap = (smallerSize * options.allowOverlap.max) / 100;
           soft += Math.max(0, minimumOverlap - overlap) + Math.max(0, overlap - maximumOverlap);
         }
-        if (options.minimumGap && overlap === 0)
-          hard += Math.max(0, options.gap - gapFor(layer, other));
+        if (options.minimumGap.enabled && overlap === 0)
+          hard += Math.max(0, options.minimumGap.gap - gapFor(layer, other));
       }
     }
     // Weighted by size so that breaking the rule with a big shape counts more.
-    if (options.limitOverlapCount) {
+    if (options.limitOverlapCount.enabled) {
       for (let index = 0; index < scene.length; index += 1) {
         const layer = scene[index];
         const count = overlapCounts[index];
-        hard += Math.max(0, count - options.maxOverlapCount) * layer.size;
-        soft += Math.max(0, options.minOverlapCount - count) * layer.size;
+        hard += Math.max(0, count - options.limitOverlapCount.max) * layer.size;
+        soft += Math.max(0, options.limitOverlapCount.min - count) * layer.size;
       }
     }
     return { hard, soft };
@@ -285,8 +287,8 @@ export const randomizeLayers = (
 
   // Shape count: drop layers from the end, or add copies of existing ones.
   let startingLayers = layers;
-  if (options.shapeCount) {
-    const targetCount = Math.round(rnd(options.countMin, options.countMax));
+  if (options.shapeCount.enabled) {
+    const targetCount = Math.round(rnd(options.shapeCount.min, options.shapeCount.max));
     startingLayers = layers.slice(0, targetCount);
     while (startingLayers.length < targetCount) {
       const template = layers.length ? layers[startingLayers.length % layers.length] : undefined;
@@ -300,7 +302,7 @@ export const randomizeLayers = (
     let layer = original;
     const previousShape = isBlob(layer) ? undefined : (layer.shape ?? 0);
 
-    if (options.shapeType) {
+    if (options.shapeType.enabled) {
       if (Math.random() < BLOB_RANDOM_CHANCE) {
         if (!isBlob(layer)) layer = withSpec(layer, { type: "blob", ...randomBlob() });
       } else {
@@ -308,37 +310,42 @@ export const randomizeLayers = (
       }
     }
 
-    if (options.shapeIndex && !isBlob(layer))
+    if (options.shapeIndex.enabled && !isBlob(layer))
       layer = { ...layer, shape: randomShapeIndex(previousShape) };
 
-    if (isBlob(layer) && (options.blobContour || options.blobEdges || options.blobSmoothness)) {
-      const edges = options.blobEdges
-        ? Math.round(rnd(options.blobEdgesMin, options.blobEdgesMax))
+    if (
+      isBlob(layer) &&
+      (options.blobContour.enabled || options.blobEdges.enabled || options.blobSmoothness.enabled)
+    ) {
+      const edges = options.blobEdges.enabled
+        ? Math.round(rnd(options.blobEdges.min, options.blobEdges.max))
         : layer.points.length;
-      const smoothness = options.blobSmoothness
-        ? (Math.round(rnd(options.blobSmoothnessMin, options.blobSmoothnessMax)) as SmoothnessIndex)
+      const smoothness = options.blobSmoothness.enabled
+        ? (Math.round(
+            rnd(options.blobSmoothness.min, options.blobSmoothness.max),
+          ) as SmoothnessIndex)
         : layer.smoothness;
       layer = { ...layer, ...createBlob(edges, smoothness) };
     }
 
     // Rotation comes before size: how much room a shape needs depends on its rotation.
-    if (options.rotation)
-      layer = { ...layer, rot: normDeg(rnd(-options.rotationRange, options.rotationRange)) };
-    if (options.size) {
+    if (options.rotation.enabled)
+      layer = { ...layer, rot: normDeg(rnd(-options.rotation.range, options.rotation.range)) };
+    if (options.size.enabled) {
       const minDimension = Math.min(canvas.width, canvas.height);
-      let minSize = (options.sizeMin / 100) * minDimension;
-      let maxSize = (options.sizeMax / 100) * minDimension;
+      let minSize = (options.size.min / 100) * minDimension;
+      let maxSize = (options.size.max / 100) * minDimension;
       // Without spill, cap the size so the shape fits: anywhere on the canvas along an axis that
       // gets a random position, or around its current center along a fixed one. Staying inside
       // wins over the minimum size.
-      if (!options.canvasSpill) {
+      if (!options.canvasSpill.enabled) {
         const extent = extentFor(layer);
         const centerX = layer.x + layer.size / 2;
         const centerY = layer.y + layer.size / 2;
-        const fitWidth = options.positionX
+        const fitWidth = options.positionX.enabled
           ? canvas.width / (extent.right - extent.left)
           : Math.min(centerX / -extent.left, (canvas.width - centerX) / extent.right);
-        const fitHeight = options.positionY
+        const fitHeight = options.positionY.enabled
           ? canvas.height / (extent.bottom - extent.top)
           : Math.min(centerY / -extent.top, (canvas.height - centerY) / extent.bottom);
         maxSize = Math.min(maxSize, Math.max(0, fitWidth), Math.max(0, fitHeight));
@@ -346,14 +353,14 @@ export const randomizeLayers = (
       }
       layer = resizeAroundCenter(layer, Math.floor(rnd(minSize, maxSize)), canvas);
     }
-    if (options.opacity)
-      layer = { ...layer, opacity: rnd(options.opacityMin, options.opacityMax) / 100 };
-    if (options.fill) layer = { ...layer, fill: randomFill() };
-    if (options.overlapColor) layer = { ...layer, overlap: randomOverlap(layer.fill) };
+    if (options.opacity.enabled)
+      layer = { ...layer, opacity: rnd(options.opacity.min, options.opacity.max) / 100 };
+    if (options.fill.enabled) layer = { ...layer, fill: randomFill() };
+    if (options.overlapColor.enabled) layer = { ...layer, overlap: randomOverlap(layer.fill) };
 
     // Try random positions and keep the one that breaks the rules least. With spread, collect
     // several valid positions and take the one furthest from other shapes and the edges.
-    if (options.positionX || options.positionY) {
+    if (options.positionX.enabled || options.positionY.enabled) {
       let best = layer;
       let bestScore = { hard: Number.POSITIVE_INFINITY, soft: Number.POSITIVE_INFINITY };
       // 1 valid position at 0% spread, up to all attempts at 100%.
@@ -401,7 +408,7 @@ export const randomizeLayers = (
   let bestSceneScore = scoreScene(bestScene);
   if (
     (bestSceneScore.hard > 0 || bestSceneScore.soft > 0) &&
-    (options.positionX || options.positionY)
+    (options.positionX.enabled || options.positionY.enabled)
   ) {
     let workingScore = bestSceneScore;
     const movableIndices = placed.map((_, index) => index);
@@ -457,21 +464,21 @@ export const randomizeLayers = (
 
   // Background and colors.
   let prefs = currentPrefs;
-  if (options.hue)
-    prefs = { ...prefs, hue: normDeg(prefs.hue + rnd(-options.hueRange, options.hueRange)) };
-  if (options.pattern) prefs = { ...prefs, pattern: pickRandom(PATTERNS) };
-  if (options.patternOpacity)
+  if (options.hue.enabled)
+    prefs = { ...prefs, hue: normDeg(prefs.hue + rnd(-options.hue.range, options.hue.range)) };
+  if (options.pattern.enabled) prefs = { ...prefs, pattern: pickRandom(PATTERNS) };
+  if (options.patternOpacity.enabled)
     prefs = {
       ...prefs,
-      opacity: clampOpacity(rnd(options.patternOpacityMin, options.patternOpacityMax)),
+      opacity: clampOpacity(rnd(options.patternOpacity.min, options.patternOpacity.max)),
     };
-  if (options.patternScale)
+  if (options.patternScale.enabled)
     prefs = {
       ...prefs,
-      patternScale: clampScale(rnd(options.patternScaleMin, options.patternScaleMax)),
+      patternScale: clampScale(rnd(options.patternScale.min, options.patternScale.max)),
     };
   // Stacking order doesn't affect the rules, so it's shuffled after placement.
-  const randomizedLayers = options.layerOrder ? shuffle(placed) : placed;
+  const randomizedLayers = options.layerOrder.enabled ? shuffle(placed) : placed;
   const finalScore = scoreScene(placed);
   return {
     layers: randomizedLayers,

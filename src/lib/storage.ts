@@ -1,13 +1,17 @@
 import { canvasSize } from "./formats";
 import { sanitizeLayer, type Layer } from "./layer";
-import { DEFAULT_RANDOMIZE_OPTIONS, type RandomizeOptions } from "./randomize";
-import { PATTERN_OPACITY, PATTERN_SCALE } from "./patterns";
+import {
+  DEFAULT_RANDOMIZE_OPTIONS,
+  RANDOMIZE_LIMITS,
+  SIZE_MAX_WITHOUT_SPILL,
+  type Limit,
+  type RandomizeOptions,
+} from "./randomize";
 import { sanitizePrefs, type Prefs } from "./prefs";
-import { BLOB_MAX_EDGES, BLOB_MIN_EDGES, SMOOTHNESS } from "./shapes";
 import { clamp } from "./utils";
 
 const KEY = "wallpaper-layout-v1";
-const RANDOMIZE_OPTIONS_KEY = "wallpaper-randomize-options-v1";
+const RANDOMIZE_OPTIONS_KEY = "wallpaper-randomize-options-v2";
 const fallbackCounters = new Map<string, number>();
 
 export const incrementCounter = (key: string, limit: number) => {
@@ -36,60 +40,46 @@ export interface SavedState {
   dark: boolean;
 }
 
-const randomizeNumberRanges: Partial<Record<keyof RandomizeOptions, [number, number]>> = {
-  sizeMin: [5, 200],
-  sizeMax: [5, 200],
-  countMin: [0, 40],
-  countMax: [0, 40],
-  rotationRange: [0, 180],
-  opacityMin: [5, 100],
-  opacityMax: [5, 100],
-  blobEdgesMin: [BLOB_MIN_EDGES, BLOB_MAX_EDGES],
-  blobEdgesMax: [BLOB_MIN_EDGES, BLOB_MAX_EDGES],
-  blobSmoothnessMin: [0, SMOOTHNESS.length - 1],
-  blobSmoothnessMax: [0, SMOOTHNESS.length - 1],
-  hueRange: [0, 180],
-  patternOpacityMin: [PATTERN_OPACITY.min, PATTERN_OPACITY.max],
-  patternOpacityMax: [PATTERN_OPACITY.min, PATTERN_OPACITY.max],
-  patternScaleMin: [PATTERN_SCALE.min, PATTERN_SCALE.max],
-  patternScaleMax: [PATTERN_SCALE.min, PATTERN_SCALE.max],
-  spreadStrength: [0, 100],
-  gap: [0, 400],
-  overlapMin: [0, 100],
-  overlapMax: [0, 100],
-  minOverlapCount: [0, 40],
-  maxOverlapCount: [0, 40],
-  bleed: [0, 100],
+const isNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+const sanitizeRandomizeOptions = (raw: Record<string, unknown>): RandomizeOptions => {
+  const options = structuredClone(DEFAULT_RANDOMIZE_OPTIONS);
+  const limits: Partial<Record<string, Limit>> = RANDOMIZE_LIMITS;
+  for (const [key, fallback] of Object.entries(options)) {
+    const value = raw[key];
+    const limit = limits[key];
+    if (typeof fallback === "number") {
+      if (limit && isNumber(value))
+        (options as unknown as Record<string, number>)[key] = clamp(value, limit.min, limit.max);
+      continue;
+    }
+    if (!value || typeof value !== "object") continue;
+    const saved = value as Record<string, unknown>;
+    const option = fallback as Record<string, number | boolean>;
+    for (const field of Object.keys(option)) {
+      const savedField = saved[field];
+      if (field === "enabled") {
+        if (typeof savedField === "boolean") option.enabled = savedField;
+      } else if (limit && isNumber(savedField)) {
+        option[field] = clamp(savedField, limit.min, limit.max);
+      }
+    }
+    if (isNumber(option.min) && isNumber(option.max)) option.max = Math.max(option.min, option.max);
+  }
+  if (!options.canvasSpill.enabled) {
+    options.size.min = Math.min(options.size.min, SIZE_MAX_WITHOUT_SPILL);
+    options.size.max = Math.min(options.size.max, SIZE_MAX_WITHOUT_SPILL);
+  }
+  return options;
 };
 
 export const loadRandomizeOptions = (): RandomizeOptions => {
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(RANDOMIZE_OPTIONS_KEY) ?? "null");
-    if (!saved || typeof saved !== "object") return DEFAULT_RANDOMIZE_OPTIONS;
-    const raw = saved as Record<string, unknown>;
-    const options = { ...DEFAULT_RANDOMIZE_OPTIONS };
-    for (const key of Object.keys(options) as (keyof RandomizeOptions)[]) {
-      const value = raw[key];
-      if (typeof options[key] === "boolean" && typeof value === "boolean")
-        options[key] = value as never;
-      const range = randomizeNumberRanges[key];
-      if (range && typeof value === "number" && Number.isFinite(value))
-        options[key] = clamp(value, ...range) as never;
-    }
-    if (!options.canvasSpill) {
-      options.sizeMin = Math.min(options.sizeMin, 100);
-      options.sizeMax = Math.min(options.sizeMax, 100);
-    }
-    options.sizeMax = Math.max(options.sizeMin, options.sizeMax);
-    options.countMax = Math.max(options.countMin, options.countMax);
-    options.opacityMax = Math.max(options.opacityMin, options.opacityMax);
-    options.blobEdgesMax = Math.max(options.blobEdgesMin, options.blobEdgesMax);
-    options.blobSmoothnessMax = Math.max(options.blobSmoothnessMin, options.blobSmoothnessMax);
-    options.patternOpacityMax = Math.max(options.patternOpacityMin, options.patternOpacityMax);
-    options.patternScaleMax = Math.max(options.patternScaleMin, options.patternScaleMax);
-    options.overlapMax = Math.max(options.overlapMin, options.overlapMax);
-    options.maxOverlapCount = Math.max(options.minOverlapCount, options.maxOverlapCount);
-    return options;
+    return saved && typeof saved === "object"
+      ? sanitizeRandomizeOptions(saved as Record<string, unknown>)
+      : DEFAULT_RANDOMIZE_OPTIONS;
   } catch {
     return DEFAULT_RANDOMIZE_OPTIONS;
   }
