@@ -104,7 +104,8 @@ const stepZone = (direction: 1 | -1, event: KeyboardEvent) => {
 };
 
 const switchZone = (edge: "start" | "end", canvasFocused: boolean) => {
-  if (!canvasFocused || !focusSidebar(edge)) focusCanvas();
+  if (canvasFocused && ((edge === "start" && focusSubpage()) || focusSidebar(edge))) return;
+  focusCanvas();
 };
 
 const leaveCanvas = (bgMode: boolean) => {
