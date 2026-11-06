@@ -71,7 +71,10 @@ export function DelayedTooltip({ content, className, children, delay = 550 }: De
       className={cn("contents", className)}
       onMouseEnter={begin}
       onMouseLeave={end}
-      onFocus={begin}
+      onFocus={(event) => {
+        // Focus moved by script after a click (e.g. opening a subpage) shouldn't pop a tooltip.
+        if (event.target.matches(":focus-visible")) begin();
+      }}
       onBlur={end}
       onPointerDown={end}
     >

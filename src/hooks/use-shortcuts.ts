@@ -197,11 +197,11 @@ export const useShortcuts = () => {
 
   useHotkeys(
     [
-      bind("Mod+Z", wallpaper.undo, { enabled: !overlay, ignoreInputs: true }),
-      bind("Mod+Shift+Z", wallpaper.redo, { enabled: !overlay, ignoreInputs: true }),
-      bind("Mod+Y", wallpaper.redo, { enabled: !overlay, ignoreInputs: true }),
+      bind("Mod+Z", wallpaper.undo, { enabled: !modal, ignoreInputs: true }),
+      bind("Mod+Shift+Z", wallpaper.redo, { enabled: !modal, ignoreInputs: true }),
+      bind("Mod+Y", wallpaper.redo, { enabled: !modal, ignoreInputs: true }),
       bind("Mod+S", () => ui.setExportMenuOpen(!exportMenuOpen), {
-        enabled: !overlay,
+        enabled: !modal,
         ignoreInputs: true,
       }),
       bind("I", () => randomizeWithOptions(), { enabled: live }),
