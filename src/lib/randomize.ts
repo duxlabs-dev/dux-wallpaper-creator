@@ -147,8 +147,11 @@ export const randomizeLayers = (
 ): { layers: Layer[]; prefs: Prefs; satisfied: boolean } => {
   type Bounds = { left: number; right: number; top: number; bottom: number };
   const boundsCache = new WeakMap<Layer, Bounds>();
+  const extentCache = new WeakMap<Layer, Bounds>();
   // Edges of the rotated outline relative to the layer center, in units of `size`.
   const extentFor = (layer: Layer): Bounds => {
+    const cached = extentCache.get(layer);
+    if (cached) return cached;
     const outline = isBlob(layer) ? layer.points : SHAPES[layer.shape ?? 0].outline;
     const angle = (layer.rot * Math.PI) / 180;
     const cos = Math.cos(angle);
@@ -164,6 +167,7 @@ export const randomizeLayers = (
       extent.top = Math.min(extent.top, rotatedY);
       extent.bottom = Math.max(extent.bottom, rotatedY);
     }
+    extentCache.set(layer, extent);
     return extent;
   };
   const boundsFor = (layer: Layer) => {
@@ -189,7 +193,7 @@ export const randomizeLayers = (
       const max = Math.floor(length + bleed - layer.size * (high + 0.5));
       return max >= min ? Math.round(rnd(min, max)) : current;
     };
-    return {
+    const candidate = {
       ...layer,
       x: options.positionX
         ? randomStart(canvas.width, extent.left, extent.right, layer.x)
@@ -198,6 +202,8 @@ export const randomizeLayers = (
         ? randomStart(canvas.height, extent.top, extent.bottom, layer.y)
         : layer.y,
     };
+    extentCache.set(candidate, extent);
+    return candidate;
   };
   const gapFor = (a: Layer, b: Layer) => {
     const boundsA = boundsFor(a);
