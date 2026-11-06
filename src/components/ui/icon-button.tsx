@@ -40,5 +40,5 @@ export function IconButton({
     />
   );
 
-  return title ? <DelayedTooltip content={title}>{button}</DelayedTooltip> : button;
+  return <DelayedTooltip content={title ?? label}>{button}</DelayedTooltip>;
 }

@@ -48,7 +48,6 @@ export function Toolbar() {
       <ExportMenu align={panel === "mini" ? "start" : "end"} />
       <IconButton
         label={`Undo (${keyLabel("Mod+Z")})`}
-        title={`Undo (${keyLabel("Mod+Z")})`}
         aria-keyshortcuts={ariaKeyshortcuts("Mod+Z")}
         variant="text"
         disabled={!canUndo}
