@@ -50,7 +50,6 @@ export function Switch({ id, label, checked, onChange, tooltip, icon, className 
   const switchControl = (
     <button
       type="button"
-      tabIndex={-1}
       role="switch"
       aria-labelledby={`${id}-label`}
       aria-checked={checked}

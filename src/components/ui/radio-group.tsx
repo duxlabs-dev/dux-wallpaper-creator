@@ -81,6 +81,7 @@ export function RadioItem({ value, className, onClick, title, ...rest }: RadioIt
       ref={ripple}
       role="radio"
       aria-checked={checked}
+      tabIndex={checked ? 0 : -1}
       data-checked={checked || undefined}
       onClick={(event) => {
         ctx.onChange(value);
@@ -88,7 +89,6 @@ export function RadioItem({ value, className, onClick, title, ...rest }: RadioIt
       }}
       className={cn("cursor-pointer", className)}
       {...rest}
-      tabIndex={-1}
     />
   );
 

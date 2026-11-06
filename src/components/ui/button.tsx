@@ -43,7 +43,6 @@ export function Button({
         className,
       )}
       {...rest}
-      tabIndex={-1}
     />
   );
 

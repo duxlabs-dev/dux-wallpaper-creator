@@ -144,14 +144,14 @@
    the ring gets cut off. Use focus-ring-inset where that is not possible
    (tabs, menu items). */
 @utility focus-ring {
-  &:focus-visible:not(button) {
+  &:focus-visible {
     outline: 3px solid var(--md-sys-color-secondary);
     outline-offset: 2px;
   }
 }
 
 @utility focus-ring-inset {
-  &:focus-visible:not(button) {
+  &:focus-visible {
     outline: 3px solid var(--md-sys-color-secondary);
     outline-offset: -3px;
   }
@@ -192,9 +192,6 @@
   }
   dialog::backdrop {
     background: rgb(0 0 0 / 0.32);
-  }
-  button:focus-visible {
-    outline: none;
   }
 }
 

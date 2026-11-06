@@ -128,7 +128,6 @@ function AddShapeButton({ mini }: { mini: boolean }) {
     <DelayedTooltip content="Add a shape (N)">
       <button
         type="button"
-        tabIndex={-1}
         aria-label="Add a shape"
         aria-keyshortcuts={ariaKeyshortcuts("N")}
         onClick={(event) => {
