@@ -10,13 +10,12 @@ interface ShapeCardProps {
   onPick: (shiftKey: boolean) => void;
 }
 
-export function ShapeCard({ d, name, current, tabIndex, onFocus, onPick }: ShapeCardProps) {
+export function ShapeCard({ d, name, current, onPick }: ShapeCardProps) {
   const button = (
     <button
       type="button"
       aria-label={name}
-      tabIndex={tabIndex}
-      onFocus={onFocus}
+      tabIndex={-1}
       onClick={(event) => onPick(event.shiftKey)}
       className={cn(
         "group/card relative flex cursor-pointer items-center justify-center rounded-2xl border-0 bg-transparent px-0 py-2 focus-ring morph hover:bg-on-surface/8 active:rounded-[10px]",

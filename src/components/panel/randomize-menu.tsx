@@ -5,6 +5,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { SliderField } from "@/components/ui/slider-field";
 import { SubpageHeader } from "@/components/ui/subpage-header";
 import { Switch as OptionSwitch } from "@/components/ui/switch";
+import { focusCanvas } from "@/a11y/focus-zones";
 import { BLOB_MAX_EDGES, BLOB_MIN_EDGES, SMOOTHNESS } from "@/lib/shapes";
 import { PATTERN_OPACITY, PATTERN_SCALE } from "@/lib/patterns";
 import type { RandomizeOptions } from "@/lib/randomize";
@@ -90,15 +91,8 @@ const SELECT_ALL_RANDOMIZE_KEYS = [
 
 export function RandomizeButton({ mini }: { mini: boolean }) {
   const open = useUi((state) => state.randomizeOpen);
-  const button = useRef<HTMLButtonElement>(null);
-  const wasOpen = useRef(open);
-  useEffect(() => {
-    if (wasOpen.current && !open) button.current?.focus({ preventScroll: true });
-    wasOpen.current = open;
-  }, [open]);
   return (
     <IconButton
-      ref={button}
       label="Randomize"
       title="Open randomize options (Shift+I)"
       aria-controls="panel-randomize"
@@ -118,12 +112,15 @@ export function RandomizeSettings() {
   const [options, setOptions] = useState(loadRandomizeOptions);
   const backButton = useRef<HTMLButtonElement>(null);
   const open = useUi((state) => state.randomizeOpen);
+  const wasOpen = useRef(open);
   const enabledCount = SELECT_ALL_RANDOMIZE_KEYS.filter((key) => options[key]).length;
   const allEnabled = enabledCount === SELECT_ALL_RANDOMIZE_KEYS.length;
   const someEnabled = enabledCount > 0 && !allEnabled;
 
   useEffect(() => {
     if (open) backButton.current?.focus({ preventScroll: true });
+    else if (wasOpen.current) focusCanvas(undefined, { keepSelection: true });
+    wasOpen.current = open;
   }, [open]);
 
   useEffect(() => persistRandomizeOptions(options), [options]);

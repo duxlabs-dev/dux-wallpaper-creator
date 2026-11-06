@@ -40,7 +40,7 @@ export interface WallpaperState {
   canRedo: boolean;
 }
 
-type Snapshot = Pick<WallpaperState, "layers" | "prefs">;
+type Snapshot = Pick<WallpaperState, "layers" | "prefs" | "dark">;
 
 const HISTORY_LIMIT = 100;
 const BURST_MS = 600;
@@ -100,14 +100,14 @@ const withCanvas = (prefs: Prefs) => ({
   canvas: canvasSize(prefs.format, prefs.orientation, prefs.custom),
 });
 
-const signatureOf = ({ layers, prefs }: Snapshot) => {
+const signatureOf = ({ layers, prefs, dark }: Snapshot) => {
   const shapes = layers
     .map((layer) => (layer.shape ?? "") + (layer.path ? "b" + layer.path.length : ""))
     .join(",");
-  return `${layers.length}|${shapes}|${prefs.pattern}|${prefs.format}|${prefs.orientation}`;
+  return `${layers.length}|${shapes}|${prefs.pattern}|${prefs.format}|${prefs.orientation}|${dark}`;
 };
 
-const snapshotOf = ({ layers, prefs }: Snapshot) => JSON.stringify({ layers, prefs });
+const snapshotOf = ({ layers, prefs, dark }: Snapshot) => JSON.stringify({ layers, prefs, dark });
 
 export const wallpaperStore = createStore(initialState(), ({ setState, get }) => {
   const undoStack: string[] = [];
@@ -169,7 +169,7 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
     const snap = JSON.parse(raw) as Snapshot;
     restoring = true;
     try {
-      patch({ layers: snap.layers, ...withCanvas(snap.prefs), activeId: null });
+      patch({ layers: snap.layers, ...withCanvas(snap.prefs), dark: snap.dark, activeId: null });
     } finally {
       restoring = false;
     }
@@ -314,7 +314,6 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
         layers: [],
         activeId: null,
         ...withCanvas({ ...defaultPrefs(), pattern: "none" }),
-        dark: true,
       });
     },
 

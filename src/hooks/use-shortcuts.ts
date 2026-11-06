@@ -207,8 +207,8 @@ export const useShortcuts = () => {
       bind("I", () => randomizeWithOptions(), { enabled: live }),
       bind("Shift+I", () => ui.setRandomizeOpen(true), { enabled: live }),
       bind("Escape", () => ui.setRandomizeOpen(false), { enabled: randomizeOpen }),
-      bind("?", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
-      bind("F1", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
+      bind("?", () => ui.setShortcutsOpen(true), { enabled: !overlay }),
+      bind("F1", () => ui.setShortcutsOpen(true), { enabled: !overlay }),
       bind("F6", () => switchZone("start", canvasFocused), {
         enabled: !overlay,
         ignoreInputs: false,

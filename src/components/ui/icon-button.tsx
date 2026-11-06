@@ -37,6 +37,7 @@ export function IconButton({
         className,
       )}
       {...rest}
+      tabIndex={-1}
     />
   );
 

@@ -7,6 +7,7 @@ export type ButtonVariant = "filled" | "tonal" | "text" | "danger";
 
 interface ButtonProps extends ComponentProps<"button"> {
   variant?: ButtonVariant;
+  blurOnClick?: boolean;
 }
 
 export const buttonVariants: Record<ButtonVariant, string> = {
@@ -20,6 +21,7 @@ export const buttonVariants: Record<ButtonVariant, string> = {
 
 export function Button({
   variant = "tonal",
+  blurOnClick = true,
   className,
   onClick,
   ref,
@@ -32,7 +34,7 @@ export function Button({
       type="button"
       ref={ripple}
       onClick={(event) => {
-        event.currentTarget.blur();
+        if (blurOnClick) event.currentTarget.blur();
         onClick?.(event);
       }}
       className={cn(
@@ -41,6 +43,7 @@ export function Button({
         className,
       )}
       {...rest}
+      tabIndex={-1}
     />
   );
 

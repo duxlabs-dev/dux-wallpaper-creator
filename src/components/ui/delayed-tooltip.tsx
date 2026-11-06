@@ -71,7 +71,6 @@ export function DelayedTooltip({ content, className, children, delay = 550 }: De
       className={cn("contents", className)}
       onMouseEnter={begin}
       onMouseLeave={end}
-      onFocus={begin}
       onBlur={end}
       onPointerDown={end}
     >

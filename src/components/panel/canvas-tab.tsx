@@ -12,7 +12,6 @@ export function CanvasTab() {
   const animationFrame = useRef<number | null>(null);
   const doneTimer = useRef<number | null>(null);
   const [resetProgress, setResetProgress] = useState(0);
-  const [holding, setHolding] = useState(false);
   const [done, setDone] = useState(false);
 
   const cancelHold = () => {
@@ -21,7 +20,6 @@ export function CanvasTab() {
       if (elapsed < 500) ui.showToast("Hold the button to clear everything.", 2000);
     }
     holdStarted.current = null;
-    setHolding(false);
     if (animationFrame.current !== null) cancelAnimationFrame(animationFrame.current);
     animationFrame.current = null;
     setResetProgress(0);
@@ -37,7 +35,6 @@ export function CanvasTab() {
   const beginHold = () => {
     if (holdStarted.current !== null) return;
     holdStarted.current = performance.now();
-    setHolding(true);
     if (doneTimer.current !== null) {
       clearTimeout(doneTimer.current);
       doneTimer.current = null;
@@ -51,7 +48,6 @@ export function CanvasTab() {
       setResetProgress(progress);
       if (progress === 1) {
         holdStarted.current = null;
-        setHolding(false);
         animationFrame.current = null;
         setDone(true);
         wallpaper.clearAll();
@@ -83,9 +79,8 @@ export function CanvasTab() {
         <div className="relative">
           <Button
             variant="danger"
-            title={
-              holding ? undefined : "Hold for 500 ms to clear layers and reset canvas settings"
-            }
+            title="Hold for 500 ms to clear layers and reset canvas settings"
+            blurOnClick={false}
             aria-keyshortcuts={ariaKeyshortcuts("X")}
             onPointerDown={beginHold}
             onPointerUp={cancelHold}
