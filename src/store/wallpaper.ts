@@ -5,24 +5,20 @@ import {
   newLayerId,
   rescaleLayers,
   resizeAroundCenter,
+  withSpec,
   type Layer,
   type ShapeSpec,
 } from "@/lib/layer";
 import type { LayoutFile } from "@/lib/layout-file";
-import {
-  OVERLAP_OPTIONS,
-  PALETTE,
-  randomFill,
-  randomOverlap,
-  type OverlapColor,
-  type PaletteColor,
-} from "@/lib/palette";
+import { OVERLAP_OPTIONS, PALETTE, type OverlapColor, type PaletteColor } from "@/lib/palette";
 import { DEFAULT_PATTERN, PATTERNS, type PatternId } from "@/lib/patterns";
 import { clampOpacity, clampScale, defaultPrefs, type Prefs } from "@/lib/prefs";
-import { createBlob, isBlob, randomBlob, randomShapeIndex, shapeIndex, SHAPES } from "@/lib/shapes";
+import { createBlob, isBlob, randomShapeIndex, shapeIndex } from "@/lib/shapes";
+import { randomizeLayers, randomPlacement, type RandomizeOptions } from "@/lib/randomize";
+import { snapPosition } from "@/lib/snap";
 import { loadSaved, persist } from "@/lib/storage";
 import type { SchemeVariant, SpecVersion } from "@/lib/theme";
-import { normDeg, pickRandom, rnd } from "@/lib/utils";
+import { normDeg } from "@/lib/utils";
 
 export type LayerDirection = number;
 
@@ -31,6 +27,8 @@ export interface FormatPatch {
   orientation?: Orientation;
   custom?: Size;
 }
+
+export type { RandomizeOptions } from "@/lib/randomize";
 
 export interface WallpaperState {
   layers: Layer[];
@@ -42,7 +40,7 @@ export interface WallpaperState {
   canRedo: boolean;
 }
 
-type Snapshot = Pick<WallpaperState, "layers" | "prefs">;
+type Snapshot = Pick<WallpaperState, "layers" | "prefs" | "dark">;
 
 const HISTORY_LIMIT = 100;
 const BURST_MS = 600;
@@ -102,62 +100,14 @@ const withCanvas = (prefs: Prefs) => ({
   canvas: canvasSize(prefs.format, prefs.orientation, prefs.custom),
 });
 
-const randomSize = (canvas: Size) =>
-  Math.round(rnd(400, 860) * (Math.min(canvas.width, canvas.height) / 1080));
-
-/* How many percent a shape may hang over the canvas edge */
-const BLEED = 0.35;
-
-/** Where a `size`-wide box lands at random along one axis of the canvas.
- * The axis is extended by `BLEED` to allow shapes hanging off the canvas. */
-const randomAxis = (extent: number, size: number) =>
-  extent > size ? rnd(-BLEED * size, extent - size + BLEED * size) : (extent - size) / 2;
-
-const randomPlacement = (canvas: Size, spec: ShapeSpec): Layer => {
-  const size = randomSize(canvas);
-  const fill = randomFill();
-  return {
-    id: newLayerId(),
-    ...spec,
-    size,
-    x: Math.round(canvas.width / 2 - size / 2),
-    y: Math.round(canvas.height / 2 - size / 2),
-    rot: 0,
-    fill,
-    overlap: randomOverlap(fill),
-  };
-};
-
-const surpriseLayers = (canvas: Size): Layer[] => {
-  const count = 2 + Math.floor(Math.random() * 4);
-  return Array.from({ length: count }, (_, index) => {
-    const size = randomSize(canvas);
-    const fill = randomFill();
-    const spec: ShapeSpec =
-      Math.random() < 0.25
-        ? { type: "blob", ...randomBlob() }
-        : { type: "shape", shape: Math.floor(Math.random() * SHAPES.length) };
-    return {
-      id: newLayerId(),
-      ...spec,
-      size,
-      x: Math.round(randomAxis(canvas.width, size)),
-      y: Math.round(randomAxis(canvas.height, size)),
-      rot: Math.round(rnd(0, 360)),
-      fill,
-      overlap: index > 0 && Math.random() < 0.75 ? randomOverlap(fill) : "none",
-    };
-  });
-};
-
-const signatureOf = ({ layers, prefs }: Snapshot) => {
+const signatureOf = ({ layers, prefs, dark }: Snapshot) => {
   const shapes = layers
     .map((layer) => (layer.shape ?? "") + (layer.path ? "b" + layer.path.length : ""))
     .join(",");
-  return `${layers.length}|${shapes}|${prefs.pattern}|${prefs.format}|${prefs.orientation}`;
+  return `${layers.length}|${shapes}|${prefs.pattern}|${prefs.format}|${prefs.orientation}|${dark}`;
 };
 
-const snapshotOf = ({ layers, prefs }: Snapshot) => JSON.stringify({ layers, prefs });
+const snapshotOf = ({ layers, prefs, dark }: Snapshot) => JSON.stringify({ layers, prefs, dark });
 
 export const wallpaperStore = createStore(initialState(), ({ setState, get }) => {
   const undoStack: string[] = [];
@@ -219,7 +169,7 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
     const snap = JSON.parse(raw) as Snapshot;
     restoring = true;
     try {
-      patch({ layers: snap.layers, ...withCanvas(snap.prefs), activeId: null });
+      patch({ layers: snap.layers, ...withCanvas(snap.prefs), dark: snap.dark, activeId: null });
     } finally {
       restoring = false;
     }
@@ -230,18 +180,7 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
     historyFlags();
   };
 
-  const replaceActiveShape = (spec: ShapeSpec) =>
-    updateActive((layer) => {
-      const next: Layer = { ...layer, ...spec };
-      if (isBlob(spec)) {
-        delete next.shape;
-      } else {
-        delete next.path;
-        delete next.points;
-        delete next.smoothness;
-      }
-      return next;
-    });
+  const replaceActiveShape = (spec: ShapeSpec) => updateActive((layer) => withSpec(layer, spec));
 
   const addLayer = (spec: ShapeSpec) => {
     const layer = randomPlacement(get().canvas, spec);
@@ -268,6 +207,27 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
 
     addLayer,
     replaceActiveShape,
+
+    snapActiveTo: (proposedX: number, proposedY: number, transient = false) => {
+      const { layers, activeId, canvas } = get();
+      const activeLayer = layers.find((layer) => layer.id === activeId);
+      if (!activeLayer) return;
+      const { x, y, guides } = snapPosition(
+        activeLayer,
+        proposedX,
+        proposedY,
+        layers.filter((layer) => layer.id !== activeId),
+        canvas,
+      );
+      updateActive((layer) => ({ ...layer, x, y }), transient);
+      return guides;
+    },
+
+    randomizeLayers: (options: RandomizeOptions) => {
+      const result = randomizeLayers(get().layers, get().canvas, options, get().prefs);
+      commit({ layers: result.layers, prefs: result.prefs });
+      return result.satisfied;
+    },
 
     duplicateActive: () => {
       const { layers, activeId } = get();
@@ -349,8 +309,13 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
       commit({ layers: layers.filter((layer) => layer.id !== activeId), activeId: null });
     },
 
-    clearAll: () =>
-      commit({ layers: [], activeId: null, prefs: { ...get().prefs, pattern: "none" } }),
+    clearAll: () => {
+      commit({
+        layers: [],
+        activeId: null,
+        ...withCanvas({ ...defaultPrefs(), pattern: "none" }),
+      });
+    },
 
     setDark: (dark: boolean) => patch({ dark }),
 
@@ -397,20 +362,6 @@ export const wallpaperStore = createStore(initialState(), ({ setState, get }) =>
       if (layout.pattern) prefs.pattern = layout.pattern;
       if (layout.strength !== undefined) prefs.opacity = layout.strength;
       commit({ layers: layout.layers, activeId: null, prefs });
-    },
-
-    surprise: () => {
-      const { prefs, canvas } = get();
-      commit({
-        prefs: {
-          ...prefs,
-          hue: Math.floor(Math.random() * 360),
-          pattern: pickRandom(PATTERNS),
-          opacity: +rnd(0.06, 0.25).toFixed(2),
-        },
-        layers: surpriseLayers(canvas),
-        activeId: null,
-      });
     },
 
     undo: () => {

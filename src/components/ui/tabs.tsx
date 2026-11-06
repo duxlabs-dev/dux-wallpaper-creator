@@ -78,7 +78,7 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
             id={`tab-${tab.id}`}
             aria-selected={selected}
             aria-controls={`panel-${tab.id}`}
-            tabIndex={selected ? 0 : -1}
+            tabIndex={-1}
             ref={ripple}
             onClick={() => onChange(tab.id)}
             onKeyDown={(event) => onKeyDown(event, index)}

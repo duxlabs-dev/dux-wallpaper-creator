@@ -2,15 +2,18 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { usePatternTile } from "@/hooks/use-pattern-tile";
 import { layerPath, layerTransform } from "@/lib/layer";
 import { patternUrl } from "@/lib/patterns";
+import { keyLabel } from "@/lib/shortcut-keys";
+import { incrementCounter } from "@/lib/storage";
 import { normDeg } from "@/lib/utils";
 import { selectActive, useWallpaper, wallpaper, wallpaperStore } from "@/store/wallpaper";
-import { ui } from "@/store/ui";
+import { ui, useUi } from "@/store/ui";
 import { LayerShape } from "./layer-shape";
 
 interface StageProps {
@@ -18,10 +21,13 @@ interface StageProps {
 }
 
 const DRAG_THRESHOLD = 5;
+const SNAP_HINT_LIMIT = 3;
+const NO_GUIDES = { vertical: [] as number[], horizontal: [] as number[] };
 const layerIdOf = (target: EventTarget | null) =>
   (target as Element | null)?.closest?.("[data-id]")?.getAttribute("data-id") ?? null;
 
 export function Stage({ scale }: StageProps) {
+  const randomizeOpen = useUi((state) => state.randomizeOpen);
   const { layers, canvas, pattern, patternOpacity, patternScale } = useWallpaper((state) => ({
     layers: state.layers,
     canvas: state.canvas,
@@ -30,6 +36,7 @@ export function Stage({ scale }: StageProps) {
     patternScale: state.prefs.patternScale,
   }));
   const active = useWallpaper(selectActive);
+  const [snapGuides, setSnapGuides] = useState(NO_GUIDES);
   const tile = usePatternTile(pattern);
   const svgRef = useRef<SVGSVGElement>(null);
   const scaleRef = useRef(scale);
@@ -42,6 +49,7 @@ export function Stage({ scale }: StageProps) {
     if (!svg) return;
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
+      if (randomizeOpen) return;
       const activeLayer = selectActive(wallpaperStore.state);
       if (!activeLayer) return;
       const delta = event.deltaY || event.deltaX;
@@ -61,10 +69,12 @@ export function Stage({ scale }: StageProps) {
     };
     svg.addEventListener("wheel", onWheel, { passive: false });
     return () => svg.removeEventListener("wheel", onWheel);
-  }, []);
+  }, [randomizeOpen]);
 
   const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if (randomizeOpen) return;
     if (event.button !== 0) return;
+    setSnapGuides(NO_GUIDES);
     if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
     const id = layerIdOf(event.target);
     if (!id) {
@@ -77,21 +87,35 @@ export function Stage({ scale }: StageProps) {
     if (!start) return;
     const origin = { x: event.clientX, y: event.clientY, lx: start.x, ly: start.y };
     let moved = false;
+    let showedSnapHint = false;
 
     const move = (pointerEvent: PointerEvent) => {
       const deltaX = pointerEvent.clientX - origin.x;
       const deltaY = pointerEvent.clientY - origin.y;
       if (!moved && Math.hypot(deltaX, deltaY) < DRAG_THRESHOLD) return;
       moved = true;
-      wallpaper.patchActive(
-        { x: origin.lx + deltaX / scaleRef.current, y: origin.ly + deltaY / scaleRef.current },
-        true,
-      );
+      if (!showedSnapHint) {
+        showedSnapHint = true;
+        if (incrementCounter("dux-snap-hint-count", SNAP_HINT_LIMIT))
+          ui.showToast(`Hold ${keyLabel("Mod")} while dragging to snap`);
+      }
+      const x = origin.lx + deltaX / scaleRef.current;
+      const y = origin.ly + deltaY / scaleRef.current;
+      const snapModifier =
+        pointerEvent.metaKey ||
+        (pointerEvent.ctrlKey && !/Mac|iPhone|iPad/.test(navigator.platform));
+      if (snapModifier) {
+        setSnapGuides(wallpaper.snapActiveTo(x, y, true) ?? NO_GUIDES);
+      } else {
+        setSnapGuides(NO_GUIDES);
+        wallpaper.patchActive({ x, y }, true);
+      }
     };
     const up = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
+      setSnapGuides(NO_GUIDES);
       if (moved) wallpaper.patchActive({});
     };
     window.addEventListener("pointermove", move);
@@ -100,6 +124,7 @@ export function Stage({ scale }: StageProps) {
   };
 
   const onContextMenu = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if (randomizeOpen) return;
     const id = layerIdOf(event.target);
     if (!id) return;
     event.preventDefault();
@@ -125,15 +150,44 @@ export function Stage({ scale }: StageProps) {
       />
       <svg
         ref={svgRef}
+        aria-disabled={randomizeOpen}
         viewBox={`0 0 ${canvas.width} ${canvas.height}`}
         width={canvas.width}
         height={canvas.height}
-        className="absolute top-0 left-0 touch-none overflow-visible select-none"
+        className={`absolute top-0 left-0 touch-none overflow-visible select-none${randomizeOpen ? " pointer-events-none" : ""}`}
         onPointerDown={onPointerDown}
         onContextMenu={onContextMenu}
       >
         {layers.map((layer, index) => (
           <LayerShape key={layer.id} layer={layer} index={index} below={layers.slice(0, index)} />
+        ))}
+        {snapGuides.vertical.map((x) => (
+          <line
+            key={`snap-x-${x}`}
+            x1={x}
+            x2={x}
+            y1={0}
+            y2={canvas.height}
+            vectorEffect="non-scaling-stroke"
+            stroke="var(--md-sys-color-primary)"
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+            className="pointer-events-none"
+          />
+        ))}
+        {snapGuides.horizontal.map((y) => (
+          <line
+            key={`snap-y-${y}`}
+            x1={0}
+            x2={canvas.width}
+            y1={y}
+            y2={y}
+            vectorEffect="non-scaling-stroke"
+            stroke="var(--md-sys-color-primary)"
+            strokeWidth={1.5}
+            strokeDasharray="5 4"
+            className="pointer-events-none"
+          />
         ))}
         {active && (
           <path

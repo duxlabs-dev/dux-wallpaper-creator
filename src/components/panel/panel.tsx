@@ -1,21 +1,21 @@
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsProps } from "@/components/ui/tabs";
+import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { focusCanvas } from "@/a11y/focus-zones";
 import { isLastFocusable } from "@/lib/focus-dom";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { cn } from "@/lib/utils";
-import { wallpaper } from "@/store/wallpaper";
 import { ui, useUi, type Tab } from "@/store/ui";
 import { ColorsTab } from "./colors-tab";
 import { CanvasTab } from "./canvas-tab";
+import { RandomizeButton, RandomizeSettings } from "./randomize-menu";
 import { ShapePicker } from "./shape-picker";
 import { ShapeTab } from "./shape-tab";
 import { Toolbar } from "./toolbar";
-import { Add, Casino, Palette, Shapes, AspectRatio } from "material-symbols/rounded";
+import { Add, AspectRatio, Palette, Shapes } from "material-symbols/rounded";
 import {
+  AspectRatio as AspectRatioFilled,
   Palette as PaletteFilled,
   Shapes as ShapesFilled,
-  AspectRatio as AspectRatioFilled,
 } from "material-symbols/rounded/filled";
 
 const tabs = [
@@ -42,10 +42,11 @@ interface PanelProps {
 }
 
 export function Panel({ hueTrack, primaryHex }: PanelProps) {
-  const { panel, tab, picking } = useUi((state) => ({
+  const { panel, tab, picking, randomizeOpen } = useUi((state) => ({
     panel: state.panel,
     tab: state.tab,
     picking: state.picker !== null,
+    randomizeOpen: state.randomizeOpen,
   }));
   if (panel === "hidden") return null;
   const mini = panel === "mini";
@@ -80,7 +81,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
             className={cn(
               "absolute inset-0 flex flex-col pt-2 transition-[translate,scale,opacity] duration-450 ease-emphasized",
               picking && "-translate-x-[18%] scale-90 opacity-0",
-              mini && "hidden",
+              (mini || randomizeOpen) && "hidden",
             )}
           >
             <Tabs tabs={tabs} value={tab} onChange={ui.setTab} label="Settings" />
@@ -97,15 +98,22 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
               )}
             </div>
             <div className="flex items-center gap-2 px-2 py-3">
-              <SurpriseButton />
+              <RandomizeButton mini={false} />
               <AddShapeButton mini={false} />
             </div>
+          </div>
+          <div
+            inert={!randomizeOpen}
+            aria-hidden={!randomizeOpen}
+            className={cn("absolute inset-0 flex flex-col", !randomizeOpen && "hidden")}
+          >
+            <RandomizeSettings />
           </div>
           <ShapePicker />
         </div>
         {mini && (
           <div className="align-center flex flex-col items-center gap-2 pb-3">
-            <SurpriseButton />
+            <RandomizeButton mini />
             <AddShapeButton mini />
           </div>
         )}
@@ -114,43 +122,30 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
   );
 }
 
-function SurpriseButton() {
-  return (
-    <Button
-      variant="tonal"
-      className="h-12 w-12 shrink-0 rounded-3xl px-0 py-0 [&_svg]:size-6"
-      title="Clears everything and randomizes shapes and pattern (I)"
-      aria-label="Surprise me"
-      aria-keyshortcuts={ariaKeyshortcuts("I")}
-      onClick={wallpaper.surprise}
-    >
-      <Casino />
-    </Button>
-  );
-}
-
 function AddShapeButton({ mini }: { mini: boolean }) {
   const picking = useUi((state) => state.picker !== null);
   return (
-    <button
-      type="button"
-      title="Add a shape (N)"
-      aria-label="Add a shape"
-      aria-keyshortcuts={ariaKeyshortcuts("N")}
-      onClick={(event) => {
-        event.currentTarget.blur();
-        if (picking) ui.closePicker();
-        else ui.openPicker("add");
-      }}
-      className={cn(
-        "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-base leading-6 font-medium text-on-primary focus-ring morph [&>svg]:size-6",
-        mini
-          ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px] active:state-layer-10"
-          : "h-12 w-full rounded-3xl hover:state-layer-8 active:rounded-[14px] active:state-layer-10",
-      )}
-    >
-      <Add />
-      {!mini && "Add shape"}
-    </button>
+    <DelayedTooltip content="Add a shape (N)">
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label="Add a shape"
+        aria-keyshortcuts={ariaKeyshortcuts("N")}
+        onClick={(event) => {
+          event.currentTarget.blur();
+          if (picking) ui.closePicker();
+          else ui.openPicker("add");
+        }}
+        className={cn(
+          "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-base leading-6 font-medium text-on-primary focus-ring morph [&>svg]:size-6",
+          mini
+            ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px]"
+            : "active:state-layer-12 h-12 min-w-0 flex-1 rounded-3xl hover:state-layer-8 active:rounded-[14px]",
+        )}
+      >
+        <Add />
+        {!mini && "Add shape"}
+      </button>
+    </DelayedTooltip>
   );
 }

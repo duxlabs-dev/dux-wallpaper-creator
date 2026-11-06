@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { FieldLabel } from "@/components/ui/field-label";
 import { IconButton } from "@/components/ui/icon-button";
 import { RadioGroup, RadioItem } from "@/components/ui/radio-group";
-import { Slider } from "@/components/ui/slider";
+import { SliderField } from "@/components/ui/slider-field";
 import { Swatch } from "@/components/ui/swatch";
 import { layerName, LAYER_SIZE_PCT } from "@/lib/layer";
 import { PALETTE, type OverlapColor, type PaletteColor } from "@/lib/palette";
@@ -120,50 +120,42 @@ export function ShapeTab() {
 
       {activeIsBlob && (
         <>
-          <div className="flex flex-col gap-2">
-            <FieldLabel
-              icon={<OneHundredTwentyThree />}
-              htmlFor="sm-edges"
-              value={active.points.length}
-            >
-              Edges
-            </FieldLabel>
-            <Slider
-              id="sm-edges"
-              min={BLOB_MIN_EDGES}
-              max={BLOB_MAX_EDGES}
-              step={1}
-              ticks
-              value={active.points.length}
-              onChange={(value) =>
-                wallpaper.patchActive({ ...createBlob(value, active.smoothness) })
-              }
-              onReset={() => wallpaper.patchActive({ ...randomBlob() })}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <FieldLabel icon={<LineCurve />} htmlFor="sm-smoothness" value={active.smoothness}>
-              Smoothness
-            </FieldLabel>
-            <Slider
-              id="sm-smoothness"
-              min={0}
-              max={SMOOTHNESS.length - 1}
-              step={1}
-              ticks
-              value={active.smoothness}
-              onChange={(value) =>
-                wallpaper.patchActive({
-                  ...createBlob(active.points.length, value as SmoothnessIndex),
-                })
-              }
-              onReset={() => wallpaper.patchActive({ ...randomBlob() })}
-            />
-          </div>
+          <SliderField
+            id="sm-edges"
+            icon={<OneHundredTwentyThree />}
+            label="Edges"
+            value={active.points.length}
+            min={BLOB_MIN_EDGES}
+            max={BLOB_MAX_EDGES}
+            step={1}
+            ticks
+            display={active.points.length}
+            tooltip="Sets how many points make up the blob outline."
+            onChange={(value) => wallpaper.patchActive({ ...createBlob(value, active.smoothness) })}
+            onReset={() => wallpaper.patchActive({ ...randomBlob() })}
+          />
+          <SliderField
+            id="sm-smoothness"
+            icon={<LineCurve />}
+            label="Smoothness"
+            value={active.smoothness}
+            min={0}
+            max={SMOOTHNESS.length - 1}
+            step={1}
+            ticks
+            display={active.smoothness}
+            tooltip="Adjusts how rounded or faceted the blob contour is."
+            onChange={(value) =>
+              wallpaper.patchActive({
+                ...createBlob(active.points.length, value as SmoothnessIndex),
+              })
+            }
+            onReset={() => wallpaper.patchActive({ ...randomBlob() })}
+          />
         </>
       )}
       <div className="flex flex-col gap-2">
-        <FieldLabel icon={<FormatColorFill />} title="Fill color: 1–8, C cycles">
+        <FieldLabel icon={<FormatColorFill />} tooltip="Fill color: 1–8, C cycles">
           Color
         </FieldLabel>
         <RadioGroup<PaletteColor>
@@ -181,7 +173,7 @@ export function ShapeTab() {
       <div className="flex flex-col gap-2">
         <FieldLabel
           icon={<Layers />}
-          title="Overlap color: Shift+1–8, Shift+0 for none. The shape on top decides the overlap color where shapes meet."
+          tooltip="Overlap color: Shift+1–8, Shift+0 for none. The shape on top decides the overlap color where shapes meet."
           value={
             index === 0 ? (
               <span id="overlap-hint" className="text-xs font-normal">
@@ -213,73 +205,55 @@ export function ShapeTab() {
         </RadioGroup>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <FieldLabel
-          icon={<OpenInFull />}
-          htmlFor="sm-size"
-          value={`${size}%`}
-          title="Size: R and F (Shift for 10 px), or scroll"
-        >
-          Size
-        </FieldLabel>
-        <Slider
-          id="sm-size"
-          min={LAYER_SIZE_PCT.min}
-          max={LAYER_SIZE_PCT.max}
-          step={1}
-          value={size}
-          onChange={(value) =>
-            wallpaper.resizeActive((value / 100) * Math.min(canvas.width, canvas.height))
-          }
-        />
-      </div>
+      <SliderField
+        id="sm-size"
+        icon={<OpenInFull />}
+        label="Size"
+        value={size}
+        min={LAYER_SIZE_PCT.min}
+        max={LAYER_SIZE_PCT.max}
+        step={1}
+        display={`${size}%`}
+        tooltip="Adjusts the shape’s scale relative to the canvas."
+        onChange={(value) =>
+          wallpaper.resizeActive((value / 100) * Math.min(canvas.width, canvas.height))
+        }
+      />
 
-      <div className="flex flex-col gap-2">
-        <FieldLabel
-          icon={<Opacity />}
-          htmlFor="sm-opacity"
-          value={`${opacity}%`}
-          title="Opacity: T and G (Shift for 10%)"
-        >
-          Opacity
-        </FieldLabel>
-        <Slider
-          id="sm-opacity"
-          min={10}
-          max={100}
-          step={1}
-          value={opacity}
-          onChange={(value) =>
-            wallpaper.patchActive({ opacity: value >= 100 ? undefined : value / 100 })
-          }
-          onReset={() => wallpaper.patchActive({ opacity: undefined })}
-        />
-      </div>
+      <SliderField
+        id="sm-opacity"
+        icon={<Opacity />}
+        label="Opacity"
+        value={opacity}
+        min={10}
+        max={100}
+        step={1}
+        display={`${opacity}%`}
+        tooltip="Sets how transparent the layer is."
+        onChange={(value) =>
+          wallpaper.patchActive({ opacity: value >= 100 ? undefined : value / 100 })
+        }
+        onReset={() => wallpaper.patchActive({ opacity: undefined })}
+      />
 
-      <div className="flex flex-col gap-2">
-        <FieldLabel
-          icon={<RotateRight />}
-          htmlFor="sm-rotation"
-          value={`${rotation}°`}
-          title="Rotation: , and . or Q and E (Shift snaps to 15°)"
-        >
-          Rotation
-        </FieldLabel>
-        <Slider
-          id="sm-rotation"
-          min={0}
-          max={359}
-          step={1}
-          value={rotation}
-          onChange={(value) => wallpaper.patchActive({ rot: value })}
-          onReset={() => wallpaper.patchActive({ rot: 0 })}
-        />
-      </div>
+      <SliderField
+        id="sm-rotation"
+        icon={<RotateRight />}
+        label="Rotation"
+        value={rotation}
+        min={0}
+        max={359}
+        step={1}
+        display={`${rotation}°`}
+        tooltip="Rotates the selected layer to a new angle."
+        onChange={(value) => wallpaper.patchActive({ rot: value })}
+        onReset={() => wallpaper.patchActive({ rot: 0 })}
+      />
 
       <div className="flex flex-col gap-2">
         <FieldLabel
           icon={<Stacks />}
-          title="Layer: U forward, J back (Shift jumps to front / back)"
+          tooltip="Layer: U forward, J back (Shift jumps to front / back)"
         >
           Layer
         </FieldLabel>

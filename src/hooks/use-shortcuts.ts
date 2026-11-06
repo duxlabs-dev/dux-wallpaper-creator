@@ -9,6 +9,7 @@ import { canvasEl, sidebarEl } from "@/lib/focus-dom";
 import { focusCanvas, focusSidebar, selectAndAnnounce } from "@/a11y/focus-zones";
 import { PALETTE } from "@/lib/palette";
 import { patternLabel } from "@/lib/patterns";
+import { randomizeWithOptions } from "@/lib/randomize-action";
 import { clamp, normDeg, round } from "@/lib/utils";
 import { say, sayActive, sayLayerPosition } from "@/a11y/announce";
 import { armable } from "@/hooks/shortcuts/arm";
@@ -175,20 +176,20 @@ const once = (run: () => void) => (event: KeyboardEvent) => {
 };
 
 export const useShortcuts = () => {
-  const { picking, sheetOpen, dialogOpen, exportMenuOpen, bgMode, canvasFocused } = useUi(
-    (state) => ({
+  const { picking, sheetOpen, dialogOpen, exportMenuOpen, randomizeOpen, bgMode, canvasFocused } =
+    useUi((state) => ({
       picking: state.picker !== null,
       sheetOpen: state.sheet !== null,
       dialogOpen: state.shortcutsOpen,
       exportMenuOpen: state.exportMenuOpen,
+      randomizeOpen: state.randomizeOpen,
       bgMode: state.bgMode,
       canvasFocused: state.canvasFocused,
-    }),
-  );
+    }));
   const active = useWallpaper((state) => state.activeId !== null);
 
   const modal = picking || sheetOpen || dialogOpen;
-  const overlay = modal || exportMenuOpen;
+  const overlay = modal || exportMenuOpen || randomizeOpen;
   const live = !overlay;
   const onCanvas = canvasFocused && live;
   const shapeKeys = live && active && !bgMode;
@@ -196,15 +197,18 @@ export const useShortcuts = () => {
 
   useHotkeys(
     [
-      bind("Mod+Z", wallpaper.undo, { enabled: !modal, ignoreInputs: true }),
-      bind("Mod+Shift+Z", wallpaper.redo, { enabled: !modal, ignoreInputs: true }),
-      bind("Mod+Y", wallpaper.redo, { enabled: !modal, ignoreInputs: true }),
+      bind("Mod+Z", wallpaper.undo, { enabled: !overlay, ignoreInputs: true }),
+      bind("Mod+Shift+Z", wallpaper.redo, { enabled: !overlay, ignoreInputs: true }),
+      bind("Mod+Y", wallpaper.redo, { enabled: !overlay, ignoreInputs: true }),
       bind("Mod+S", () => ui.setExportMenuOpen(!exportMenuOpen), {
-        enabled: !modal,
+        enabled: !overlay,
         ignoreInputs: true,
       }),
-      bind("?", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
-      bind("F1", () => ui.setShortcutsOpen(true), { enabled: !dialogOpen }),
+      bind("I", () => randomizeWithOptions(), { enabled: live }),
+      bind("Shift+I", () => ui.setRandomizeOpen(true), { enabled: live }),
+      bind("Escape", () => ui.setRandomizeOpen(false), { enabled: randomizeOpen }),
+      bind("?", () => ui.setShortcutsOpen(true), { enabled: !overlay }),
+      bind("F1", () => ui.setShortcutsOpen(true), { enabled: !overlay }),
       bind("F6", () => switchZone("start", canvasFocused), {
         enabled: !overlay,
         ignoreInputs: false,
@@ -360,10 +364,6 @@ export const useShortcuts = () => {
           enabled: live,
         },
       ),
-      bind("I", (event) => armable(event, "i", "Surprise me? Press I again", wallpaper.surprise), {
-        enabled: live,
-      }),
-
       bind(
         "B",
         once(() => ui.toggleBgMode(!bgMode)),

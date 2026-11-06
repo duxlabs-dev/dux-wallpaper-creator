@@ -23,6 +23,7 @@ export interface UiState {
   sheet: PickMode | null;
   shortcutsOpen: boolean;
   exportMenuOpen: boolean;
+  randomizeOpen: boolean;
   toast: Toast | null;
   canvasFocused: boolean;
   bgMode: boolean;
@@ -41,6 +42,7 @@ export const uiStore = createStore<UiState, ReturnType<typeof uiActions>>(
     sheet: null,
     shortcutsOpen: false,
     exportMenuOpen: false,
+    randomizeOpen: false,
     toast: null,
     canvasFocused: false,
     bgMode: false,
@@ -59,7 +61,12 @@ function uiActions({
   const patch = (partial: Partial<UiState>) => setState((prev) => ({ ...prev, ...partial }));
 
   const setPanel = (panel: PanelMode) =>
-    patch({ panel, picker: panel === "full" ? get().picker : null, exportMenuOpen: false });
+    patch({
+      panel,
+      picker: panel === "full" ? get().picker : null,
+      randomizeOpen: panel === "full" && get().randomizeOpen,
+      exportMenuOpen: false,
+    });
 
   const announce = (text: string) => patch({ live: { id: ++liveId, text } });
 
@@ -79,6 +86,11 @@ function uiActions({
     closeSheet: () => patch({ sheet: null }),
     setShortcutsOpen: (shortcutsOpen: boolean) => patch({ shortcutsOpen }),
     setExportMenuOpen: (exportMenuOpen: boolean) => patch({ exportMenuOpen }),
+    setRandomizeOpen: (randomizeOpen: boolean) =>
+      patch({
+        randomizeOpen,
+        ...(randomizeOpen ? { panel: "full", picker: null } : {}),
+      }),
 
     setCanvasFocused: (canvasFocused: boolean) => patch({ canvasFocused }),
     toggleBgMode: (on: boolean) => {
