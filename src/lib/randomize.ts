@@ -278,29 +278,26 @@ export const randomizeLayers = (
       layer = { ...layer, ...createBlob(edges, smoothness) };
     }
 
-    if (options.size) {
-      const minDimension = Math.min(canvas.width, canvas.height);
-      const size = Math.round(
-        rnd((options.sizeMin / 100) * minDimension, (options.sizeMax / 100) * minDimension),
-      );
-      layer = resizeAroundCenter(layer, size, canvas);
-    }
     if (options.rotation)
       layer = { ...layer, rot: normDeg(rnd(-options.rotationRange, options.rotationRange)) };
-    if (options.size && !options.canvasSpill && (options.positionX || options.positionY)) {
-      const extent = extentFactorsFor(layer);
-      const centerX = layer.x + layer.size / 2;
-      const centerY = layer.y + layer.size / 2;
-      const maxWidth = options.positionX
-        ? canvas.width / (2 * extent.x)
-        : Math.min(centerX, canvas.width - centerX) / extent.x;
-      const maxHeight = options.positionY
-        ? canvas.height / (2 * extent.y)
-        : Math.min(centerY, canvas.height - centerY) / extent.y;
-      const maxSize = Math.max(0, Math.min(maxWidth, maxHeight));
-      const minimumSize = (options.sizeMin / 100) * Math.min(canvas.width, canvas.height);
-      if (maxSize >= minimumSize && layer.size > maxSize)
-        layer = resizeAroundCenter(layer, maxSize, canvas);
+    if (options.size) {
+      const minDimension = Math.min(canvas.width, canvas.height);
+      let minSize = (options.sizeMin / 100) * minDimension;
+      let maxSize = (options.sizeMax / 100) * minDimension;
+      if (!options.canvasSpill) {
+        const extent = extentFactorsFor(layer);
+        const centerX = layer.x + layer.size / 2;
+        const centerY = layer.y + layer.size / 2;
+        const fitWidth = options.positionX
+          ? canvas.width / (2 * extent.x)
+          : Math.min(centerX, canvas.width - centerX) / extent.x;
+        const fitHeight = options.positionY
+          ? canvas.height / (2 * extent.y)
+          : Math.min(centerY, canvas.height - centerY) / extent.y;
+        maxSize = Math.min(maxSize, Math.max(0, fitWidth), Math.max(0, fitHeight));
+        minSize = Math.min(minSize, maxSize);
+      }
+      layer = resizeAroundCenter(layer, Math.floor(rnd(minSize, maxSize)), canvas);
     }
     if (options.opacity)
       layer = { ...layer, opacity: rnd(options.opacityMin, options.opacityMax) / 100 };
