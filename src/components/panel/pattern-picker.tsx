@@ -75,7 +75,7 @@ export function PatternPicker() {
         min={PATTERN_SCALE.min}
         max={PATTERN_SCALE.max}
         step={0.1}
-        tooltip="Adjusts the size of the background pattern tiles."
+        tooltip="Pattern size: R and F while in background mode"
         onChange={wallpaper.setPatternScale}
         onReset={() => wallpaper.setPatternScale(PATTERN_SCALE.default)}
       />
@@ -87,7 +87,7 @@ export function PatternPicker() {
         min={PATTERN_OPACITY.min * 100}
         max={PATTERN_OPACITY.max * 100}
         step={1}
-        tooltip="Changes how visible the background pattern appears."
+        tooltip="Pattern strength: ← and → or T and G while in background mode"
         onChange={(value) => wallpaper.setPatternOpacity(value / 100)}
         onReset={() => wallpaper.setPatternOpacity(PATTERN_OPACITY.default)}
       />

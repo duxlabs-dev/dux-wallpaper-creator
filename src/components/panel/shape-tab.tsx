@@ -214,7 +214,7 @@ export function ShapeTab() {
         max={LAYER_SIZE_PCT.max}
         step={1}
         display={`${size}%`}
-        tooltip="Adjusts the shape’s scale relative to the canvas."
+        tooltip="Size: R and F (Shift for 10 px), or scroll"
         onChange={(value) =>
           wallpaper.resizeActive((value / 100) * Math.min(canvas.width, canvas.height))
         }
@@ -229,7 +229,7 @@ export function ShapeTab() {
         max={100}
         step={1}
         display={`${opacity}%`}
-        tooltip="Sets how transparent the layer is."
+        tooltip="Opacity: T and G (Shift for 10%)"
         onChange={(value) =>
           wallpaper.patchActive({ opacity: value >= 100 ? undefined : value / 100 })
         }
@@ -245,7 +245,7 @@ export function ShapeTab() {
         max={359}
         step={1}
         display={`${rotation}°`}
-        tooltip="Rotates the selected layer to a new angle."
+        tooltip="Rotation: , and . or Q and E (Shift snaps to 15°)"
         onChange={(value) => wallpaper.patchActive({ rot: value })}
         onReset={() => wallpaper.patchActive({ rot: 0 })}
       />
