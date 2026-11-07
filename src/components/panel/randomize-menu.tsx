@@ -114,6 +114,7 @@ export function RandomizeButton({ mini }: { mini: boolean }) {
   const open = useUi((state) => state.randomizeOpen);
   return (
     <IconButton
+      data-flip
       label="Randomize"
       title="Open randomize options (Shift+I)"
       aria-controls="panel-randomize"

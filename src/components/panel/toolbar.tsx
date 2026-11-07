@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { IconButton } from "@/components/ui/icon-button";
+import { useFlip } from "@/hooks/ui/use-flip";
 import { useDropImport } from "@/hooks/use-import";
 import { ariaKeyshortcuts, keyLabel } from "@/lib/shortcut-keys";
 import { useWallpaper, wallpaper } from "@/store/wallpaper";
@@ -15,9 +16,14 @@ export function Toolbar() {
   const panel = useUi((state) => state.panel);
   const fileInput = useRef<HTMLInputElement>(null);
   const onFilePicked = useDropImport();
+  const toolbar = useRef<HTMLDivElement>(null);
+  useFlip(toolbar, panel, { unfold: true });
 
   return (
-    <div className="flex items-center gap-1 px-2 pb-2 group-data-[panel=mini]/panel:flex-col group-data-[panel=mini]/panel:gap-2 group-data-[panel=mini]/panel:px-0 group-data-[panel=mini]/panel:pb-0 max-md:group-data-[panel=mini]/panel:flex-row max-md:group-data-[panel=mini]/panel:justify-center">
+    <div
+      ref={toolbar}
+      className="flex items-center gap-1 px-2 pb-2 group-data-[panel=mini]/panel:flex-col group-data-[panel=mini]/panel:gap-2 group-data-[panel=mini]/panel:px-0 group-data-[panel=mini]/panel:pb-0 max-md:group-data-[panel=mini]/panel:flex-row max-md:group-data-[panel=mini]/panel:justify-center"
+    >
       <IconButton
         label={panel === "full" ? `Minimize the panel (${keyLabel("P")})` : "Expand the panel"}
         aria-keyshortcuts={ariaKeyshortcuts("P")}

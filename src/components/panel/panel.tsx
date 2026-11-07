@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import { Tabs, TabsProps } from "@/components/ui/tabs";
 import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { focusCanvas } from "@/a11y/focus-zones";
+import { useFlip } from "@/hooks/ui/use-flip";
 import { isLastFocusable } from "@/lib/focus-dom";
 import { ariaKeyshortcuts } from "@/lib/shortcut-keys";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,8 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
     randomizeOpen: state.randomizeOpen,
   }));
   const tabScroll = useRef<HTMLDivElement>(null);
+  const column = useRef<HTMLDivElement>(null);
+  useFlip(column, panel, { selector: "[data-flip]" });
 
   useLayoutEffect(() => {
     tabScroll.current?.scrollTo({ top: 0 });
@@ -74,11 +77,12 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
       data-panel={panel}
       onKeyDown={onPanelKeyDown}
       className={cn(
-        "group/panel relative flex shrink-0 flex-col overflow-hidden rounded-[28px] bg-surface-container text-sm text-on-surface transition-[width,background-color] duration-300 ease-[cubic-bezier(0.2,0,0,1)] max-md:max-h-[48%] max-md:w-auto",
+        "group/panel relative flex shrink-0 flex-col overflow-hidden rounded-[28px] bg-surface-container text-sm text-on-surface [transition:width_var(--duration-default-spatial)_var(--ease-default-spatial),background-color_var(--duration-default-effects)_var(--ease-default-effects)] max-md:max-h-[48%] max-md:w-auto",
         mini ? "w-[72px] p-2 pb-0" : "w-80 px-2 pt-2",
       )}
     >
       <div
+        ref={column}
         className={cn("flex min-h-0 flex-1 flex-col max-md:w-auto", mini ? "w-14" : "w-[304px]")}
       >
         <Toolbar />
@@ -105,10 +109,6 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
                 <ShapeTab />
               )}
             </div>
-            <div className="flex items-center gap-2 px-2 py-3">
-              <RandomizeButton mini={false} />
-              <AddShapeButton mini={false} />
-            </div>
           </div>
           <div
             inert={!randomizeOpen}
@@ -119,12 +119,16 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
           </div>
           <ShapePicker />
         </div>
-        {mini && (
-          <div className="align-center flex flex-col items-center gap-2 pb-3">
-            <RandomizeButton mini />
-            <AddShapeButton mini />
-          </div>
-        )}
+        <div
+          className={cn(
+            "flex gap-2",
+            mini ? "flex-col items-start pb-3 pl-1" : "items-center px-2 py-3",
+            (picking || randomizeOpen) && "hidden",
+          )}
+        >
+          <RandomizeButton mini={mini} />
+          <AddShapeButton mini={mini} />
+        </div>
       </div>
     </aside>
   );
@@ -136,6 +140,7 @@ function AddShapeButton({ mini }: { mini: boolean }) {
     <DelayedTooltip content="Add a shape (N)">
       <button
         type="button"
+        data-flip
         aria-label="Add a shape"
         aria-keyshortcuts={ariaKeyshortcuts("N")}
         onClick={(event) => {
@@ -144,14 +149,23 @@ function AddShapeButton({ mini }: { mini: boolean }) {
           else ui.openPicker("add");
         }}
         className={cn(
-          "flex cursor-pointer items-center justify-center gap-2 border-0 bg-primary text-base leading-6 font-medium text-on-primary focus-ring morph [&>svg]:size-6",
+          "flex cursor-pointer items-center justify-center overflow-hidden border-0 bg-primary text-base leading-6 font-medium whitespace-nowrap text-on-primary focus-ring morph hover:state-layer-8 active:state-layer-10 [&>svg]:size-6 [&>svg]:shrink-0",
           mini
-            ? "mx-auto size-12 rounded-[14px] hover:state-layer-8 active:rounded-[10px]"
-            : "active:state-layer-12 h-12 min-w-0 flex-1 rounded-3xl hover:state-layer-8 active:rounded-[14px]",
+            ? "size-12 rounded-[14px] active:rounded-[10px]"
+            : "h-12 min-w-0 flex-1 rounded-3xl active:rounded-[14px]",
         )}
       >
         <Add />
-        {!mini && "Add shape"}
+        {/* The label grows and shrinks with the button instead of popping in and out. */}
+        <span
+          aria-hidden="true"
+          className={cn(
+            "grid transition-[grid-template-columns,opacity] duration-(--duration-default-spatial) ease-(--ease-default-spatial)",
+            mini ? "grid-cols-[0fr] opacity-0" : "grid-cols-[1fr] opacity-100",
+          )}
+        >
+          <span className="overflow-hidden pl-2">Add shape</span>
+        </span>
       </button>
     </DelayedTooltip>
   );
