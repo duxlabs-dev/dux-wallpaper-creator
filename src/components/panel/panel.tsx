@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { Tabs, TabsProps } from "@/components/ui/tabs";
 import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { focusCanvas } from "@/a11y/focus-zones";
@@ -48,6 +49,12 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
     picking: state.picker !== null,
     randomizeOpen: state.randomizeOpen,
   }));
+  const tabScroll = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    tabScroll.current?.scrollTo({ top: 0 });
+  }, [tab]);
+
   if (panel === "hidden") return null;
   const mini = panel === "mini";
 
@@ -86,6 +93,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
           >
             <Tabs tabs={tabs} value={tab} onChange={ui.setTab} label="Settings" />
             <div
+              ref={tabScroll}
               tabIndex={-1}
               className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto pt-5 pb-2"
             >
