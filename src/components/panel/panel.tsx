@@ -82,7 +82,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
         className={cn("flex min-h-0 flex-1 flex-col max-md:w-auto", mini ? "w-14" : "w-[304px]")}
       >
         <Toolbar />
-        <div className="relative min-h-0 flex-1 overflow-hidden">
+        <div className="relative min-h-0 flex-1">
           <div
             inert={picking}
             className={cn(
@@ -113,7 +113,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
           <div
             inert={!randomizeOpen}
             aria-hidden={!randomizeOpen}
-            className={cn("absolute inset-0 flex flex-col pt-2", !randomizeOpen && "hidden")}
+            className={cn("absolute inset-0 flex flex-col", !randomizeOpen && "hidden")}
           >
             <RandomizeSettings />
           </div>

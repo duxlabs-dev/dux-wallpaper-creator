@@ -19,17 +19,18 @@ export function SubpageHeader({
   endContent,
 }: SubpageHeaderProps) {
   return (
-    <header className="flex items-center gap-2 border-b border-outline-variant px-2 pb-2">
+    <header className="flex h-16 shrink-0 items-center gap-2">
       <IconButton
         ref={backRef}
         data-subpage-back
+        variant="text"
         label={backLabel}
         aria-keyshortcuts={ariaKeyshortcuts("Escape")}
         onClick={onBack}
       >
         <ArrowBack />
       </IconButton>
-      <h2 className="m-0 min-w-0 flex-1 text-base font-semibold whitespace-nowrap">{title}</h2>
+      <h2 className="m-0 min-w-0 flex-1 truncate text-[22px] leading-7 font-normal">{title}</h2>
       {endContent}
     </header>
   );
