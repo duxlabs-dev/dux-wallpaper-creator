@@ -7,13 +7,25 @@ import { ShapeCard } from "./shape-card";
 interface ShapeGridProps {
   currentShape?: number;
   onPick: (spec: ShapeSpec, shiftKey: boolean) => void;
+  columns?: number;
   className?: string;
 }
 
 const columnCount = (element: HTMLElement) =>
   Math.max(1, getComputedStyle(element).gridTemplateColumns.split(/\s+/).filter(Boolean).length);
 
-export function ShapeGrid({ currentShape, onPick, className }: ShapeGridProps) {
+export function ShapeGrid({ currentShape, onPick, columns, className }: ShapeGridProps) {
+  const total = SHAPES.length + 1;
+  const lastRowStart = columns ? Math.floor((total - 1) / columns) * columns : 0;
+  const corners = (position: number) =>
+    columns
+      ? cn(
+          position === 0 && "rounded-tl-2xl",
+          position === columns - 1 && "rounded-tr-2xl",
+          position === lastRowStart && "rounded-bl-2xl",
+          position === total - 1 && "rounded-br-2xl",
+        )
+      : undefined;
   const [blob, setBlob] = useState(randomBlob);
   const [active, setActive] = useState(currentShape === undefined ? 0 : currentShape + 1);
   const grid = useRef<HTMLDivElement>(null);
@@ -51,13 +63,15 @@ export function ShapeGrid({ currentShape, onPick, className }: ShapeGridProps) {
       ref={grid}
       onKeyDown={onKeyDown}
       className={cn(
-        "scrollbar-hidden grid content-start gap-1 overflow-y-auto overscroll-contain",
+        "scrollbar-hidden grid content-start gap-2 overflow-y-auto overscroll-contain",
         className,
       )}
     >
       <ShapeCard
         d={blob.path}
         name="Random blob"
+        connected={columns !== undefined}
+        cornerClass={corners(0)}
         tabIndex={active === 0 ? 0 : -1}
         onFocus={() => setActive(0)}
         onPick={(shift) => {
@@ -71,6 +85,8 @@ export function ShapeGrid({ currentShape, onPick, className }: ShapeGridProps) {
           d={shape.path}
           name={prettyName(shape.name)}
           current={currentShape === index}
+          connected={columns !== undefined}
+          cornerClass={corners(index + 1)}
           tabIndex={active === index + 1 ? 0 : -1}
           onFocus={() => setActive(index + 1)}
           onPick={(shift) => onPick({ type: "shape", shape: index }, shift)}

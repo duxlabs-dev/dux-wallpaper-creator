@@ -5,12 +5,23 @@ interface ShapeCardProps {
   d: string;
   name: string;
   current?: boolean;
+  connected?: boolean;
+  cornerClass?: string;
   tabIndex?: number;
   onFocus?: () => void;
   onPick: (shiftKey: boolean) => void;
 }
 
-export function ShapeCard({ d, name, current, tabIndex, onFocus, onPick }: ShapeCardProps) {
+export function ShapeCard({
+  d,
+  name,
+  current,
+  connected = false,
+  cornerClass,
+  tabIndex,
+  onFocus,
+  onPick,
+}: ShapeCardProps) {
   const button = (
     <button
       type="button"
@@ -19,11 +30,20 @@ export function ShapeCard({ d, name, current, tabIndex, onFocus, onPick }: Shape
       onFocus={onFocus}
       onClick={(event) => onPick(event.shiftKey)}
       className={cn(
-        "group/card relative flex cursor-pointer items-center justify-center rounded-2xl border-0 bg-transparent px-0 py-2 focus-ring morph hover:bg-on-surface/8 active:rounded-[10px]",
-        current && "rounded-[28px] bg-primary-container",
+        "group/card relative flex aspect-square cursor-pointer items-center justify-center border-0 bg-surface-bright p-0 focus-ring morph hover:state-layer-8 focus-visible:z-1",
+        connected
+          ? cn(
+              "rounded-[4px] active:rounded-2xl",
+              cornerClass,
+              current && "rounded-2xl bg-primary-container",
+            )
+          : cn(
+              "rounded-2xl active:rounded-[10px]",
+              current && "rounded-[28px] bg-primary-container",
+            ),
       )}
     >
-      <svg viewBox="0 0 1 1" aria-hidden className="size-14 shrink-0 overflow-visible">
+      <svg viewBox="0 0 1 1" aria-hidden className="size-12 shrink-0 overflow-visible">
         <path
           d={d}
           className={cn(
