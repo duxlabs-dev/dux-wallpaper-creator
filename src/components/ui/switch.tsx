@@ -22,22 +22,26 @@ export function Switch({ id, label, checked, onChange, tooltip, icon, className 
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={cn(
-        "group/switch ease-effect relative inline-flex h-8 w-[52px] shrink-0 items-center rounded-full border-2 p-0 focus-ring transition-[background-color,border-color] duration-300",
-        checked ? "border-primary bg-primary" : "border-outline-variant bg-surface-container-high",
+        "group/switch relative inline-flex h-8 w-[52px] shrink-0 cursor-pointer rounded-full border-2 p-0 focus-ring",
+        "after:absolute after:inset-x-0 after:-inset-y-2",
+        checked ? "border-transparent bg-primary" : "border-outline bg-surface-container-highest",
       )}
     >
       <span
+        aria-hidden="true"
         className={cn(
-          "ease-spring absolute top-1/2 left-[6px] inline-flex shrink-0 -translate-y-1/2 items-center justify-center rounded-full transition-[width,height,background-color,translate] duration-300 group-active/switch:size-7",
+          "pointer-events-none absolute top-1/2 size-10 -translate-1/2 rounded-full transition-[left] duration-(--duration-fast-spatial) ease-(--ease-fast-spatial) group-hover/switch:state-layer-8 group-focus-visible/switch:state-layer-10 group-active/switch:state-layer-10 group-active/switch:transition-none",
+          checked ? "left-[34px] text-primary" : "left-[14px] text-on-surface",
+        )}
+      />
+      <span
+        className={cn(
+          "pointer-events-none absolute top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-full transition-[left,width,height] duration-(--duration-fast-spatial) ease-(--ease-fast-spatial) group-active/switch:size-7 group-active/switch:transition-none",
           checked
-            ? "size-6 translate-x-4 bg-on-primary text-primary"
-            : "size-4 bg-on-surface-variant text-transparent",
+            ? "left-[22px] size-6 bg-on-primary text-on-primary-container group-hover/switch:bg-primary-container group-focus-visible/switch:bg-primary-container group-active/switch:left-[20px] group-active/switch:bg-primary-container"
+            : "left-[6px] size-4 bg-outline group-hover/switch:bg-on-surface-variant group-focus-visible/switch:bg-on-surface-variant group-active/switch:left-0 group-active/switch:bg-on-surface-variant",
         )}
       >
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 left-1/2 size-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-on-surface/10 opacity-0 transition-opacity group-hover/switch:opacity-100"
-        />
         {checked && <Check aria-hidden="true" className="size-4" />}
       </span>
     </button>

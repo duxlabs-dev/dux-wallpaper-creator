@@ -1,17 +1,33 @@
-import { Check, Remove } from "material-symbols/rounded";
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 interface CheckboxProps {
   label: string;
   checked: boolean;
   indeterminate?: boolean;
+  disabled?: boolean;
   onChange: (checked: boolean) => void;
 }
 
-export function Checkbox({ label, checked, indeterminate = false, onChange }: CheckboxProps) {
+const CHECK_PATH = "M4.5 9 L7.2 11.7 L13.5 5.4";
+const BAR_PATH = "M4.5 9 L7.2 9 L13.5 9";
+
+export function Checkbox({
+  label,
+  checked,
+  indeterminate = false,
+  disabled = false,
+  onChange,
+}: CheckboxProps) {
   const selected = checked || indeterminate;
+  const path = indeterminate ? BAR_PATH : CHECK_PATH;
   return (
-    <label className="relative flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full hover:state-layer-8">
+    <label
+      className={cn(
+        "group/checkbox relative flex size-12 shrink-0 items-center justify-center",
+        disabled ? "cursor-not-allowed" : "cursor-pointer",
+      )}
+    >
       <input
         type="checkbox"
         aria-label={label}
@@ -19,23 +35,58 @@ export function Checkbox({ label, checked, indeterminate = false, onChange }: Ch
           if (input) input.indeterminate = indeterminate;
         }}
         checked={checked}
+        disabled={disabled}
         onChange={(event) => onChange(event.currentTarget.checked)}
-        className="peer absolute size-5 cursor-pointer opacity-0"
+        className="peer absolute inset-0 m-0 cursor-[inherit] opacity-0"
       />
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none flex size-[18px] items-center justify-center rounded-[4px] border-2 transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary",
+          "pointer-events-none absolute size-10 rounded-full",
+          !disabled &&
+            "group-hover/checkbox:state-layer-8 group-active/checkbox:state-layer-10 peer-focus-visible:state-layer-10",
           selected
-            ? "border-primary bg-primary text-on-primary"
-            : "border-on-surface-variant text-transparent",
+            ? "text-primary group-active/checkbox:text-on-surface"
+            : "text-on-surface group-active/checkbox:text-primary",
+        )}
+      />
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none relative size-[18px] rounded-[2px] transition-[background-color,border-color] duration-(--duration-default-effects) ease-(--ease-default-effects) peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-secondary",
+          selected
+            ? disabled
+              ? "bg-on-surface/38 text-surface"
+              : "bg-primary text-on-primary"
+            : cn(
+                "border-2",
+                disabled
+                  ? "border-on-surface/38"
+                  : "border-on-surface-variant group-hover/checkbox:border-on-surface group-active/checkbox:border-on-surface peer-focus-visible:border-on-surface",
+              ),
         )}
       >
-        {indeterminate ? (
-          <Remove aria-hidden="true" className="size-3.5" />
-        ) : (
-          checked && <Check aria-hidden="true" className="size-3.5" />
-        )}
+        <svg viewBox="0 0 18 18" className="absolute inset-0 size-[18px] overflow-visible">
+          <path
+            d={path}
+            pathLength={1}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="square"
+            strokeDasharray={1}
+            className={selected ? "opacity-100" : "opacity-0"}
+            style={
+              {
+                d: `path("${path}")`,
+                strokeDashoffset: selected ? 0 : 1,
+                transition: selected
+                  ? "d var(--duration-default-spatial) var(--ease-default-spatial), stroke-dashoffset var(--duration-default-spatial) var(--ease-default-spatial)"
+                  : "none",
+              } as CSSProperties
+            }
+          />
+        </svg>
       </span>
     </label>
   );
