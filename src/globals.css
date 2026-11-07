@@ -40,6 +40,7 @@
   --color-tertiary-container: var(--md-sys-color-tertiary-container);
   --color-on-tertiary-container: var(--md-sys-color-on-tertiary-container);
   --color-surface: var(--md-sys-color-surface);
+  --color-surface-bright: var(--md-sys-color-surface-bright);
   --color-surface-container-low: var(--md-sys-color-surface-container-low);
   --color-surface-container: var(--md-sys-color-surface-container);
   --color-surface-container-high: var(--md-sys-color-surface-container-high);
@@ -173,6 +174,43 @@
   &::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+}
+
+/* Each direct child is a segment of an M3E segmented list. */
+@utility panel-sections {
+  & > * {
+    border-radius: 4px;
+    padding: 16px;
+    background: var(--color-surface-bright);
+  }
+  & > :first-child {
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+  }
+  & > :last-child {
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+  }
+}
+
+/* Animates opening and closing a <details> */
+@utility details-animated {
+  interpolate-size: allow-keywords;
+  &::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size var(--duration-default-spatial) var(--ease-default-spatial),
+      content-visibility var(--duration-default-spatial) allow-discrete;
+  }
+  &[open]::details-content {
+    block-size: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::details-content {
+      transition: none;
+    }
   }
 }
 

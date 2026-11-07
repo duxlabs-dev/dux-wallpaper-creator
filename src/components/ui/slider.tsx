@@ -14,6 +14,7 @@ interface SliderProps {
   className?: string;
   ticks?: boolean;
   disabled?: boolean;
+  inactiveTrackColor?: string;
   onPointerDown?: (event: React.PointerEvent<HTMLElement>) => void;
   onPointerUp?: (event: React.PointerEvent<HTMLElement>) => void;
   onPointerCancel?: (event: React.PointerEvent<HTMLElement>) => void;
@@ -45,6 +46,7 @@ export function Slider({
   className,
   ticks = false,
   disabled = false,
+  inactiveTrackColor = INACTIVE_TRACK,
   onPointerDown,
   onPointerUp,
   onPointerCancel,
@@ -118,7 +120,7 @@ export function Slider({
 
   const vars = {
     "--active": disabled ? DISABLED_ACTIVE_TRACK : ACTIVE_TRACK,
-    "--inactive": disabled ? DISABLED_INACTIVE_TRACK : INACTIVE_TRACK,
+    "--inactive": disabled ? DISABLED_INACTIVE_TRACK : inactiveTrackColor,
     "--slider-gap": `${trackGap}px`,
     ...(track ? { "--track": track } : null),
   } as React.CSSProperties;

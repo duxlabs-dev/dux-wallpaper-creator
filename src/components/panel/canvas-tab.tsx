@@ -21,11 +21,11 @@ export function CanvasTab() {
       id="panel-canvas"
       role="tabpanel"
       aria-labelledby="tab-canvas"
-      className="flex animate-fade-up flex-col gap-7"
+      className="flex animate-fade-up flex-col gap-0.5 panel-sections"
     >
       <FormatPicker />
       <PatternPicker />
-      <div className="flex flex-col gap-2 border-t border-outline-variant pt-6">
+      <div className="flex flex-col gap-2">
         <HoldButton
           icon={<RestartAlt />}
           label="Reset canvas settings"

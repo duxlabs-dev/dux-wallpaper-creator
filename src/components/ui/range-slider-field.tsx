@@ -3,17 +3,33 @@ import { FieldLabel } from "@/components/ui/field-label";
 import { RangeSlider, type Range } from "@/components/ui/range-slider";
 import { cn } from "@/lib/utils";
 
-interface RangeSliderFieldProps {
+export interface RangeFormat {
+  format?: (value: number) => string;
+  /** Written once after the range ("3–12 shapes"), or after a single value. */
+  unit?: string | ((value: number) => string);
+}
+
+const unitFor = (unit: RangeFormat["unit"], value: number) =>
+  typeof unit === "function" ? unit(value) : (unit ?? "");
+
+export const formatValue = (value: number, { format = String, unit }: RangeFormat = {}) =>
+  `${format(value)}${unitFor(unit, value)}`;
+
+export const formatRange = ([low, high]: Range, { format = String, unit }: RangeFormat = {}) =>
+  `${low === high ? format(low) : `${format(low)}–${format(high)}`}${unitFor(unit, high)}`;
+
+interface RangeSliderFieldProps extends RangeFormat {
   id: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   label: string;
+  showHeader?: boolean;
   value: Range;
   min: number;
   max: number;
   step: number;
-  format?: (value: number) => string;
   tooltip?: string;
   className?: string;
+  inactiveTrackColor?: string;
   onChange: (value: Range) => void;
 }
 
@@ -21,26 +37,30 @@ export function RangeSliderField({
   id,
   icon,
   label,
+  showHeader = true,
   value,
   min,
   max,
   step,
-  format = String,
+  format,
+  unit,
   tooltip,
   className,
+  inactiveTrackColor,
   onChange,
 }: RangeSliderFieldProps) {
-  const [low, high] = value;
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <FieldLabel
-        icon={icon}
-        htmlFor={`${id}-min`}
-        value={low === high ? format(low) : `${format(low)}–${format(high)}`}
-        tooltip={tooltip}
-      >
-        {label}
-      </FieldLabel>
+      {showHeader && (
+        <FieldLabel
+          icon={icon}
+          htmlFor={`${id}-min`}
+          value={formatRange(value, { format, unit })}
+          tooltip={tooltip}
+        >
+          {label}
+        </FieldLabel>
+      )}
       <RangeSlider
         id={id}
         value={value}
@@ -48,7 +68,8 @@ export function RangeSliderField({
         max={max}
         step={step}
         labels={[`Minimum ${label.toLowerCase()}`, `Maximum ${label.toLowerCase()}`]}
-        valueText={format}
+        valueText={(current) => formatValue(current, { format, unit })}
+        inactiveTrackColor={inactiveTrackColor}
         onChange={onChange}
       />
     </div>

@@ -42,9 +42,8 @@ export function Checkbox({
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute size-10 rounded-full",
-          !disabled &&
-            "group-hover/checkbox:state-layer-8 group-active/checkbox:state-layer-10 peer-focus-visible:state-layer-10",
+          "pointer-events-none absolute size-10 rounded-full peer-focus-visible:outline-3 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-secondary",
+          !disabled && "group-hover/checkbox:state-layer-8 group-active/checkbox:state-layer-10",
           selected
             ? "text-primary group-active/checkbox:text-on-surface"
             : "text-on-surface group-active/checkbox:text-primary",
@@ -53,7 +52,7 @@ export function Checkbox({
       <span
         aria-hidden="true"
         className={cn(
-          "pointer-events-none relative size-[18px] rounded-[2px] transition-[background-color,border-color] duration-(--duration-default-effects) ease-(--ease-default-effects) peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-secondary",
+          "pointer-events-none relative size-[18px] rounded-[2px] transition-[background-color,border-color] duration-(--duration-default-effects) ease-(--ease-default-effects)",
           selected
             ? disabled
               ? "bg-on-surface/38 text-surface"

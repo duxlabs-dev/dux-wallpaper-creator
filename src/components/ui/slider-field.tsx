@@ -5,8 +5,9 @@ import { cn } from "@/lib/utils";
 
 interface SliderFieldProps {
   id: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   label: string;
+  showHeader?: boolean;
   value: number;
   min: number;
   max: number;
@@ -17,6 +18,7 @@ interface SliderFieldProps {
   title?: string;
   ticks?: boolean;
   className?: string;
+  inactiveTrackColor?: string;
   onChange: (value: number) => void;
   onReset?: () => void;
 }
@@ -25,6 +27,7 @@ export function SliderField({
   id,
   icon,
   label,
+  showHeader = true,
   value,
   min,
   max,
@@ -35,14 +38,23 @@ export function SliderField({
   title,
   ticks,
   className,
+  inactiveTrackColor,
   onChange,
   onReset,
 }: SliderFieldProps) {
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <FieldLabel icon={icon} htmlFor={id} value={display} title={title} tooltip={tooltip ?? title}>
-        {label}
-      </FieldLabel>
+      {showHeader && (
+        <FieldLabel
+          icon={icon}
+          htmlFor={id}
+          value={display}
+          title={title}
+          tooltip={tooltip ?? title}
+        >
+          {label}
+        </FieldLabel>
+      )}
       <Slider
         id={id}
         label={label}
@@ -51,6 +63,7 @@ export function SliderField({
         max={max}
         step={step}
         ticks={ticks}
+        inactiveTrackColor={inactiveTrackColor}
         onChange={onChange}
         onReset={onReset}
       />

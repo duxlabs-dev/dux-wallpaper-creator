@@ -1,5 +1,6 @@
 import { Check } from "material-symbols/rounded";
 import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
+import { useRipple } from "@/hooks/ui/use-ripple";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -10,15 +11,27 @@ interface SwitchProps {
   onChange: (checked: boolean) => void;
   tooltip?: string;
   icon?: ReactNode;
+  value?: ReactNode;
   className?: string;
 }
 
-export function Switch({ id, label, checked, onChange, tooltip, icon, className }: SwitchProps) {
+export function Switch({
+  id,
+  label,
+  checked,
+  onChange,
+  tooltip,
+  icon,
+  value,
+  className,
+}: SwitchProps) {
+  const ripple = useRipple<HTMLDivElement>();
+
   const switchControl = (
     <button
       type="button"
+      id={id}
       role="switch"
-      aria-labelledby={`${id}-label`}
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={cn(
@@ -48,23 +61,49 @@ export function Switch({ id, label, checked, onChange, tooltip, icon, className 
   );
 
   return (
-    <div className={cn("flex min-h-10 items-center justify-between gap-3 px-0 py-1.5", className)}>
-      <span
-        id={`${id}-label`}
-        className="flex min-w-0 items-center gap-2 text-sm font-semibold text-on-surface"
+    <div
+      ref={ripple}
+      data-slot="row"
+      // The label and switch handle their own clicks.
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onChange(!checked);
+      }}
+      className={cn(
+        "flex cursor-pointer items-start justify-between gap-3 py-2",
+        "relative overflow-hidden rounded-[inherit]",
+        className,
+      )}
+    >
+      <label
+        htmlFor={id}
+        className="flex min-w-0 flex-1 cursor-pointer items-start gap-2 text-sm font-semibold select-none"
       >
-        <span className="flex size-6 shrink-0 items-center justify-center text-on-surface-variant [&>svg]:size-5">
-          {icon ?? <Check />}
-        </span>
-        {tooltip ? (
-          <DelayedTooltip content={tooltip}>
-            <span className="truncate">{label}</span>
-          </DelayedTooltip>
-        ) : (
-          <span className="truncate">{label}</span>
+        {icon && (
+          <span className="flex h-10 w-6 shrink-0 items-center justify-center text-on-surface-variant [&>svg]:size-5">
+            {icon}
+          </span>
         )}
-      </span>
-      {switchControl}
+        {/* Top-aligned, so the label stays put when supporting text appears. */}
+        <span className="flex min-w-0 flex-col pt-2.5">
+          {tooltip ? (
+            <DelayedTooltip content={tooltip}>
+              <span>{label}</span>
+            </DelayedTooltip>
+          ) : (
+            <span>{label}</span>
+          )}
+          {value !== undefined && (
+            <span
+              aria-hidden="true"
+              data-slot="supporting"
+              className="mt-0.5 text-xs font-normal text-on-surface-variant tabular-nums"
+            >
+              {value}
+            </span>
+          )}
+        </span>
+      </label>
+      <div className="flex h-10 shrink-0 items-center">{switchControl}</div>
     </div>
   );
 }

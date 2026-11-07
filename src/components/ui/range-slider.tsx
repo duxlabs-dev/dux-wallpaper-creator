@@ -13,6 +13,7 @@ interface RangeSliderProps {
   labels: [string, string];
   valueText?: (value: number) => string;
   className?: string;
+  inactiveTrackColor?: string;
 }
 
 const GAP = 6;
@@ -31,6 +32,7 @@ export function RangeSlider({
   labels,
   valueText,
   className,
+  inactiveTrackColor = "var(--color-secondary-container)",
 }: RangeSliderProps) {
   const wrap = useRef<HTMLDivElement>(null);
   const inputs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
@@ -104,8 +106,7 @@ export function RangeSlider({
     setPressed(null);
   };
 
-  const trackClass =
-    "pointer-events-none absolute top-1.5 h-4 bg-secondary-container pointer-coarse:top-3.5";
+  const trackClass = "pointer-events-none absolute top-1.5 h-4 pointer-coarse:top-3.5";
 
   return (
     <div
@@ -177,7 +178,7 @@ export function RangeSlider({
       <div
         aria-hidden
         className={cn(trackClass, "left-0 rounded-l-lg rounded-r-[2px]")}
-        style={{ width: Math.max(0, positions[0] - gaps[0]) }}
+        style={{ width: Math.max(0, positions[0] - gaps[0]), backgroundColor: inactiveTrackColor }}
       />
       <div
         aria-hidden
@@ -190,7 +191,10 @@ export function RangeSlider({
       <div
         aria-hidden
         className={cn(trackClass, "right-0 rounded-l-[2px] rounded-r-lg")}
-        style={{ left: Math.min(width, positions[1] + gaps[1]) }}
+        style={{
+          left: Math.min(width, positions[1] + gaps[1]),
+          backgroundColor: inactiveTrackColor,
+        }}
       />
       {width > 0 &&
         stops.map((stop) => (

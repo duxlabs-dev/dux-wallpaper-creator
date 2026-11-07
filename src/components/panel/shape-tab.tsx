@@ -59,7 +59,7 @@ export function ShapeTab() {
         role="tabpanel"
         aria-labelledby="tab-shape"
         tabIndex={0}
-        className="flex animate-fade-up flex-col gap-3 text-center text-on-surface-variant"
+        className="flex animate-fade-up flex-col gap-0.5 panel-sections text-center text-on-surface-variant"
       >
         <span>No shape selected. Click one on the wallpaper, or add a new one.</span>
       </section>
@@ -76,9 +76,9 @@ export function ShapeTab() {
       id="panel-shape"
       role="tabpanel"
       aria-labelledby="tab-shape"
-      className="flex animate-fade-up flex-col gap-6"
+      className="flex animate-fade-up flex-col gap-0.5 panel-sections"
     >
-      <div className="-mt-1 -mb-0.5 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <IconButton
           label="Previous shape (Shift+Tab)"
           aria-keyshortcuts={ariaKeyshortcuts("Shift+Tab")}

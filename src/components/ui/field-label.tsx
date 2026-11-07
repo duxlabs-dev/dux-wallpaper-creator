@@ -3,7 +3,7 @@ import { DelayedTooltip } from "@/components/ui/delayed-tooltip";
 import { cn } from "@/lib/utils";
 
 interface FieldLabelProps extends HTMLAttributes<HTMLElement> {
-  icon: ReactNode;
+  icon?: ReactNode;
   htmlFor?: string;
   value?: ReactNode;
   tooltip?: string;

@@ -87,7 +87,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
             <Tabs tabs={tabs} value={tab} onChange={ui.setTab} label="Settings" />
             <div
               tabIndex={-1}
-              className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-2 pt-5 pb-2"
+              className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto pt-5 pb-2"
             >
               {tab === "canvas" ? (
                 <CanvasTab />
@@ -105,7 +105,7 @@ export function Panel({ hueTrack, primaryHex }: PanelProps) {
           <div
             inert={!randomizeOpen}
             aria-hidden={!randomizeOpen}
-            className={cn("absolute inset-0 flex flex-col", !randomizeOpen && "hidden")}
+            className={cn("absolute inset-0 flex flex-col pt-2", !randomizeOpen && "hidden")}
           >
             <RandomizeSettings />
           </div>
